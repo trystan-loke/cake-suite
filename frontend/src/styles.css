@@ -1,0 +1,58 @@
+/* Minimal global reset to remove default gaps and set base layout */
+* { box-sizing: border-box; }
+html, body, #app { height: 100%; }
+html, body { margin: 0; padding: 0; background: #fbf9f6; }
+img, svg, video, canvas { display: block; max-width: 100%; }
+button, input, select, textarea { font: inherit; }
+
+/* Vintage bakery theme variables */
+:root {
+	/* Pastel palette */
+	--cream: #fbf4e9;
+	--rose: #f7d1d7;
+	--dusty-rose: #d8a1a9;
+	--mint: #d9efe8;
+	--sage: #a4c3a2;
+	--cocoa: #6b4f4f;
+	--espresso: #4a3b36;
+	--ink: #2a2a2a;
+	--vanilla: #fffaf3;
+	--gold: #c59d5f;
+
+	--bg-app: var(--vanilla);
+	--bg-panel: #ffffff;
+	--text: #3a2f2f;
+	--muted: #7b6f6f;
+	--border: #eedfd3;
+
+	--primary: var(--dusty-rose);
+	--primary-ink: #5a3a3a;
+	--accent: var(--sage);
+}
+
+body {
+	color: var(--text);
+	background: var(--bg-app);
+	font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+	line-height: 1.5;
+}
+
+h1, h2, h3, .display {
+	font-family: "Playfair Display", Georgia, "Times New Roman", serif;
+	color: var(--espresso);
+}
+
+.card {
+	background: var(--bg-panel);
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	box-shadow: 0 6px 20px rgba(42, 42, 42, 0.06);
+}
+
+.pill {
+	padding: 0.25rem 0.5rem;
+	border-radius: 999px;
+	background: var(--mint);
+	color: var(--espresso);
+	border: 1px solid #cfe7df;
+}
