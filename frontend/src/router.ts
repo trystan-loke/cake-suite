@@ -1,30 +1,24 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 
 const routes: RouteRecordRaw[] = [
+  { path: '/', redirect: { name: 'order' } },
   {
-    path: '/',
-    name: 'dashboard',
-    component: () => import('./views/Dashboard.vue'),
+    path: '/order',
+    name: 'order',
+    component: () => import('./views/OrderView.vue'),
+    meta: { nav: true, title: 'Order', order: 1},
   },
   {
-    path: '/orders',
-    name: 'orders',
-    component: () => import('./views/Orders.vue'),
+    path: '/expense',
+    name: 'expense',
+    component: () => import('./views/ExpenseView.vue'),
+    meta: { nav: true, title: 'Expense', order: 2},
   },
   {
-    path: '/inventory',
-    name: 'inventory',
-    component: () => import('./views/Inventory.vue'),
-  },
-  {
-    path: '/reports',
-    name: 'reports',
-    component: () => import('./views/Reports.vue'),
-  },
-  {
-    path: '/settings',
-    name: 'settings',
-    component: () => import('./views/Settings.vue'),
+    path: '/delivery-log',
+    name: 'delivery-log',
+    component: () => import('./views/DeliveryLogView.vue'),
+    meta: { nav: true, title: 'Delivery Log', order: 3},
   },
 ]
 

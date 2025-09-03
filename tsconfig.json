@@ -1,0 +1,6 @@
+{
+  "include": [
+    "frontend/src/**/*",
+    "frontend/src/types/**/*.d.ts"
+  ]
+}
