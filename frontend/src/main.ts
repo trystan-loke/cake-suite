@@ -4,7 +4,7 @@ import { createApp } from 'vue'
 import 'vuetify/styles'
 import { createVuetify } from 'vuetify'
 import { aliases, mdi } from 'vuetify/iconsets/mdi-svg'
-import { mdiDotsVertical } from '@mdi/js'
+import { mdiDotsVertical, mdiPlus, mdiPencil, mdiDelete } from '@mdi/js'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
 
@@ -20,6 +20,9 @@ const vuetify = createVuetify({
     aliases: {
       ...aliases,
       dotsVertical: mdiDotsVertical,
+      plus: mdiPlus,
+      pencil: mdiPencil,
+      delete: mdiDelete
     },
     sets: {
       mdi,
