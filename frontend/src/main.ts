@@ -11,6 +11,7 @@ import * as directives from 'vuetify/directives'
 import App from './App.vue'
 import { router } from './router.ts'
 import './styles.css'
+import './registerSW'
 
 const vuetify = createVuetify({
   components,
