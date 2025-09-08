@@ -57,9 +57,14 @@ public class OrderService {
         existingOrder.setCustomerName(orderDTO.getCustomerName());
         existingOrder.setCustomerPhone(orderDTO.getCustomerPhone());
         existingOrder.setCustomerEmail(orderDTO.getCustomerEmail());
+        existingOrder.setOrderSummary(orderDTO.getOrderSummary());
         existingOrder.setOrderDetails(orderDTO.getOrderDetails());
         existingOrder.setTotalAmount(orderDTO.getTotalAmount());
-        existingOrder.setDueDate(orderDTO.getDueDate());
+        existingOrder.setDeposit(orderDTO.getDeposit());
+        existingOrder.setTip(orderDTO.getTip());
+        existingOrder.setDelivery(orderDTO.isDelivery());
+        existingOrder.setDeliveryFee(orderDTO.getDeliveryFee());
+        existingOrder.setPickupDate(orderDTO.getPickupDate());
         existingOrder.setStatus(orderDTO.getStatus());
         
         Order updatedOrder = orderRepository.save(existingOrder);
@@ -84,10 +89,15 @@ public class OrderService {
                 .customerName(order.getCustomerName())
                 .customerPhone(order.getCustomerPhone())
                 .customerEmail(order.getCustomerEmail())
+                .orderSummary(order.getOrderSummary())
                 .orderDetails(order.getOrderDetails())
                 .totalAmount(order.getTotalAmount())
+                .deposit(order.getDeposit())
+                .tip(order.getTip())
+                .isDelivery(order.isDelivery())
+                .deliveryFee(order.getDeliveryFee())
+                .pickupDate(order.getPickupDate())
                 .orderDate(order.getOrderDate())
-                .dueDate(order.getDueDate())
                 .status(order.getStatus())
                 .build();
     }
@@ -98,9 +108,14 @@ public class OrderService {
                 .customerName(orderDTO.getCustomerName())
                 .customerPhone(orderDTO.getCustomerPhone())
                 .customerEmail(orderDTO.getCustomerEmail())
+                .orderSummary(orderDTO.getOrderSummary())
                 .orderDetails(orderDTO.getOrderDetails())
                 .totalAmount(orderDTO.getTotalAmount())
-                .dueDate(orderDTO.getDueDate())
+                .deposit(orderDTO.getDeposit())
+                .tip(orderDTO.getTip())
+                .isDelivery(orderDTO.isDelivery())
+                .deliveryFee(orderDTO.getDeliveryFee())
+                .pickupDate(orderDTO.getPickupDate())
                 .status(orderDTO.getStatus())
                 .build();
     }

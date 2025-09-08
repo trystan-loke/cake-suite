@@ -17,9 +17,17 @@ public class OrderDTO {
     private String customerName;
     private String customerPhone;
     private String customerEmail;
+    
+    private String orderSummary;
     private String orderDetails;
     private BigDecimal totalAmount;
+    private BigDecimal deposit;
+    private BigDecimal tip;
+    
+    private boolean isDelivery;
+    private BigDecimal deliveryFee;
+    private LocalDateTime pickupDate;
+    
     private LocalDateTime orderDate;
-    private LocalDateTime dueDate;
     private String status;
 }

@@ -4,11 +4,6 @@
       <v-col>
         <h2>Orders</h2>
       </v-col>
-      <v-col cols="auto">
-        <v-btn color="primary" prepend-icon="$plus" @click="openOrderDialog()">
-          New Order
-        </v-btn>
-      </v-col>
     </v-row>
 
     <!-- Loading state -->
@@ -24,69 +19,59 @@
       </template>
     </v-alert>
 
-    <!-- Orders table -->
-    <v-card v-if="!loading && !error">
-      <v-data-table
-        :headers="tableHeaders"
-        :items="orders"
-        :items-per-page="10"
-        class="elevation-1"
-      >
-        <!-- Format currency in the totalAmount column -->
-        <template v-slot:item.totalAmount="{ item }">
-          ${{ Number(item.totalAmount).toFixed(2) }}
-        </template>
-
-        <!-- Format dates -->
-        <template v-slot:item.orderDate="{ item }">
-          {{ formatDate(item.orderDate) }}
-        </template>
-
-        <template v-slot:item.dueDate="{ item }">
-          {{ formatDate(item.dueDate) }}
-        </template>
-
-        <!-- Status with colored chip -->
-        <template v-slot:item.status="{ item }">
-          <v-chip
-            :color="getStatusColor(item.status)"
-            size="small"
+    <!-- Orders card list -->
+    <v-container v-if="!loading && !error" class="orders-grid-container px-0">
+      <v-row class="orders-grid">
+        <v-col
+          cols="12"
+          sm="6"
+          md="4"
+          v-for="order in orders"
+          :key="order.id"
+          class="mb-4"
+        >
+          <v-card
+            class="order-card"
+            elevation="2"
+            @click="openOrderDetails(order)"
           >
-            {{ item.status }}
-          </v-chip>
-        </template>
-
-        <!-- Actions column -->
-        <template v-slot:item.actions="{ item }">
-          <v-icon 
-            size="small"
-            class="me-2"
-            @click="openOrderDialog(item)"
-          >
-            $pencil
-          </v-icon>
-          <v-icon 
-            size="small"
-            color="error"
-            @click="confirmDelete(item)"
-          >
-            $delete
-          </v-icon>
-        </template>
-      </v-data-table>
-    </v-card>
+            <v-card-title class="d-flex justify-space-between">
+              <div style="white-space: pre-wrap;">
+                {{ formatDate(order.pickupDate) }} - {{ order.orderSummary }}
+              </div>
+              <v-btn
+                icon="$edit"
+                density="compact"
+                variant="text"
+                color="primary"
+                size="small"
+                @click.stop="openOrderDialog(order)"
+                class="ms-2"
+              ></v-btn>
+            </v-card-title>
+            <v-card-text class="d-flex flex-column">
+              <div class="order-details mb-2">{{ order.orderDetails }}</div>
+              <div class="d-flex justify-space-between align-center mt-auto">
+                <div><strong>${{ Number(order.totalAmount || 0).toFixed(2) }}</strong></div>
+                <div>{{ order.isDelivery ? 'Delivery' : 'Pickup' }}</div>
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+    </v-container>
 
     <!-- Order form dialog -->
     <v-dialog v-model="showOrderDialog" max-width="800px">
       <v-card>
-        <v-card-title>
-          <span class="text-h5">{{ isEditMode ? 'Edit Order' : 'New Order' }}</span>
+        <v-card-title class="px-8 pb-0">
+          {{ isEditMode ? 'Edit Order' : 'New Order' }}
         </v-card-title>
         
-        <v-card-text>
+        <v-card-text class="px-4 pt-0">
           <v-form ref="form" v-model="formValid" @submit.prevent="saveOrder">
             <v-container>
-              <v-row>
+              <v-row dense>
                 <!-- Customer Information -->
                 <v-col cols="12" md="6">
                   <v-text-field
@@ -100,8 +85,6 @@
                   <v-text-field
                     v-model="currentOrder.customerPhone"
                     label="Phone Number"
-                    required
-                    :rules="[v => !!v || 'Phone number is required']"
                   ></v-text-field>
                 </v-col>
                 <v-col cols="12">
@@ -112,18 +95,28 @@
                   ></v-text-field>
                 </v-col>
 
-                <!-- Order Details -->
+                <!-- Order Summary and Details -->
+                <v-col cols="12" md="6">
+                  <v-text-field
+                    v-model="currentOrder.orderSummary"
+                    label="Order Summary"
+                    required
+                    :rules="[v => !!v || 'Order summary is required']"
+                  ></v-text-field>
+                </v-col>
+
                 <v-col cols="12">
                   <v-textarea
                     v-model="currentOrder.orderDetails"
                     label="Order Details"
-                    rows="3"
+                    rows="8"
                     required
                     :rules="[v => !!v || 'Order details are required']"
                   ></v-textarea>
                 </v-col>
 
-                <v-col cols="12" md="6">
+                <!-- Financial Information -->
+                <v-col cols="12" md="4">
                   <v-text-field
                     v-model="currentOrder.totalAmount"
                     label="Total Amount"
@@ -137,14 +130,30 @@
                   ></v-text-field>
                 </v-col>
 
-                <!-- Dates -->
-                <v-col cols="12" md="6">
-                  <v-select
-                    v-model="currentOrder.status"
-                    label="Status"
-                    :items="orderStatuses"
-                    required
-                  ></v-select>
+                <v-col cols="12" md="4">
+                  <v-text-field
+                    v-model="currentOrder.deposit"
+                    label="Deposit"
+                    type="number"
+                    prefix="$"
+                  ></v-text-field>
+                </v-col>
+                
+                <!-- Delivery/Pickup Options -->
+                <v-col cols="12" md="4">
+                  <v-switch
+                    v-model="currentOrder.isDelivery"
+                    label="Delivery"
+                  ></v-switch>
+                </v-col>
+
+                <v-col cols="12" md="4" v-if="currentOrder.isDelivery">
+                  <v-text-field
+                    v-model="currentOrder.deliveryFee"
+                    label="Delivery Fee"
+                    type="number"
+                    prefix="$"
+                  ></v-text-field>
                 </v-col>
                 
                 <v-col cols="12" md="6">
@@ -169,22 +178,30 @@
 
                 <v-col cols="12" md="6">
                   <v-menu
-                    v-model="showDueDatePicker"
+                    v-model="showPickupDatePicker"
                     :close-on-content-click="false"
                   >
                     <template v-slot:activator="{ props }">
                       <v-text-field
-                        v-model="formattedDueDate"
-                        label="Due Date"
+                        v-model="formattedPickupDate"
+                        :label="currentOrder.isDelivery ? 'Delivery Date' : 'Pickup Date'"
                         readonly
                         v-bind="props"
                       ></v-text-field>
                     </template>
                     <v-date-picker
-                      v-model="currentOrder.dueDate"
-                      @update:model-value="showDueDatePicker = false"
+                      v-model="currentOrder.pickupDate"
+                      @update:model-value="showPickupDatePicker = false"
                     ></v-date-picker>
                   </v-menu>
+                </v-col>
+                <v-col cols="12" md="6">
+                  <v-select
+                    v-model="currentOrder.status"
+                    label="Status"
+                    :items="orderStatuses"
+                    required
+                  ></v-select>
                 </v-col>
               </v-row>
             </v-container>
@@ -192,8 +209,15 @@
         </v-card-text>
 
         <v-card-actions>
+          <v-btn 
+            v-if="isEditMode" 
+            color="error" 
+            variant="text" 
+            prepend-icon="$delete" 
+            @click="confirmDelete(currentOrder)"
+          >Delete</v-btn>
           <v-spacer></v-spacer>
-          <v-btn color="error" variant="text" @click="showOrderDialog = false">Cancel</v-btn>
+          <v-btn color="grey-darken-1" variant="text" @click="showOrderDialog = false">Cancel</v-btn>
           <v-btn 
             color="primary" 
             variant="text" 
@@ -225,6 +249,156 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- Order details dialog -->
+    <v-dialog v-model="showOrderDetailsDialog" max-width="700px">
+      <v-card v-if="selectedOrder" class="order-details-card">
+        <!-- Header with order summary and status -->
+        <v-card-item>
+          <template v-slot:prepend>
+            <v-avatar color="primary" class="text-white" size="48">
+              {{ selectedOrder.customerName.charAt(0).toUpperCase() }}
+            </v-avatar>
+          </template>
+          
+          <v-card-title class="text-h5 ps-2">
+            {{ selectedOrder.orderSummary }}
+          </v-card-title>
+          
+          <template v-slot:append>
+            <v-chip
+              :color="getStatusColor(selectedOrder.status)"
+              :text="selectedOrder.status"
+              size="small"
+              class="ms-2"
+            ></v-chip>
+          </template>
+        </v-card-item>
+
+        <v-divider></v-divider>
+        
+        <v-card-text class="pt-4">
+          <!-- Order info section with key details -->
+          <v-row>
+            <!-- Customer information -->
+            <v-col cols="12" sm="6">
+              <v-list density="compact" bg-color="transparent">
+                <v-list-subheader class="ps-0 text-primary">Customer Information</v-list-subheader>
+                <v-list-item>
+                  <template v-slot:prepend>
+                    <v-icon icon="$account" color="primary" size="small"></v-icon>
+                  </template>
+                  <v-list-item-title>{{ selectedOrder.customerName }}</v-list-item-title>
+                </v-list-item>
+                
+                <v-list-item v-if="selectedOrder.customerPhone">
+                  <template v-slot:prepend>
+                    <v-icon icon="$phone" color="primary" size="small"></v-icon>
+                  </template>
+                  <v-list-item-title>{{ selectedOrder.customerPhone }}</v-list-item-title>
+                </v-list-item>
+                
+                <v-list-item v-if="selectedOrder.customerEmail">
+                  <template v-slot:prepend>
+                    <v-icon icon="$email" color="primary" size="small"></v-icon>
+                  </template>
+                  <v-list-item-title>{{ selectedOrder.customerEmail }}</v-list-item-title>
+                </v-list-item>
+              </v-list>
+            </v-col>
+            
+            <!-- Order dates -->
+            <v-col cols="12" sm="6">
+              <v-list density="compact" bg-color="transparent">
+                <v-list-subheader class="ps-0 text-primary">Order Dates</v-list-subheader>
+                <v-list-item>
+                  <template v-slot:prepend>
+                    <v-icon icon="$calendar" color="primary" size="small"></v-icon>
+                  </template>
+                  <v-list-item-title>Order Date: {{ formatDate(selectedOrder.orderDate, true) }}</v-list-item-title>
+                </v-list-item>
+                
+                <v-list-item>
+                  <template v-slot:prepend>
+                    <v-icon :icon="selectedOrder.isDelivery ? '$truck' : '$store'" color="primary" size="small"></v-icon>
+                  </template>
+                  <v-list-item-title>
+                    {{ selectedOrder.isDelivery ? 'Delivery' : 'Pickup' }} Date: {{ formatDate(selectedOrder.pickupDate, true) }}
+                  </v-list-item-title>
+                </v-list-item>
+              </v-list>
+            </v-col>
+          </v-row>
+
+          <v-divider class="my-4"></v-divider>
+          
+          <!-- Order details section -->
+          <h3 class="text-h6 mb-3">Order Details</h3>
+          <v-card flat border class="mb-4 pa-3 order-details-text">
+            <p style="white-space: pre-line">{{ selectedOrder.orderDetails }}</p>
+          </v-card>
+          
+          <!-- Financial summary -->
+          <h3 class="text-h6 mb-3">Financial Summary</h3>
+          <v-row class="financial-summary">
+            <v-col cols="6" sm="3" class="financial-item">
+              <v-card flat border height="100%">
+                <v-card-text class="text-center">
+                  <div class="text-subtitle-2">Total Amount</div>
+                  <div class="text-h5 mt-2">${{ Number(selectedOrder.totalAmount || 0).toFixed(2) }}</div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+            
+            <v-col cols="6" sm="3" v-if="selectedOrder.deposit && Number(selectedOrder.deposit) > 0" class="financial-item">
+              <v-card flat border height="100%">
+                <v-card-text class="text-center">
+                  <div class="text-subtitle-2">Deposit</div>
+                  <div class="text-h5 mt-2">${{ Number(selectedOrder.deposit).toFixed(2) }}</div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+            
+            <v-col cols="6" sm="3" v-if="selectedOrder.tip && Number(selectedOrder.tip) > 0" class="financial-item">
+              <v-card flat border height="100%">
+                <v-card-text class="text-center">
+                  <div class="text-subtitle-2">Tip</div>
+                  <div class="text-h5 mt-2">${{ Number(selectedOrder.tip).toFixed(2) }}</div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+            
+            <v-col cols="6" sm="3" v-if="selectedOrder.isDelivery && selectedOrder.deliveryFee && Number(selectedOrder.deliveryFee) > 0" class="financial-item">
+              <v-card flat border height="100%">
+                <v-card-text class="text-center">
+                  <div class="text-subtitle-2">Delivery Fee</div>
+                  <div class="text-h5 mt-2">${{ Number(selectedOrder.deliveryFee).toFixed(2) }}</div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+        </v-card-text>
+        
+        <v-divider></v-divider>
+        
+        <!-- Action buttons -->
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="grey-darken-1" variant="text" @click="showOrderDetailsDialog = false">Close</v-btn>
+          <v-btn color="primary" variant="text" @click="openOrderDialog(selectedOrder)">Edit</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+    
+    <!-- Floating Action Button for adding new orders -->
+    <v-btn
+      color="primary"
+      icon="$plus"
+      size="large"
+      class="fab-button"
+      @click="openOrderDialog()"
+      elevation="4"
+    ></v-btn>
   </v-container>
 </template>
 
@@ -233,19 +407,8 @@ import { ref, onMounted, computed } from 'vue';
 import { OrderAPI, type Order } from '../services/api';
 import { globalNotifications } from '../composables/notifications';
 
-// Table headers
-const tableHeaders = [
-  { title: 'Customer', key: 'customerName' },
-  { title: 'Phone', key: 'customerPhone' },
-  { title: 'Total', key: 'totalAmount' },
-  { title: 'Order Date', key: 'orderDate' },
-  { title: 'Due Date', key: 'dueDate' },
-  { title: 'Status', key: 'status' },
-  { title: 'Actions', key: 'actions', sortable: false }
-];
-
 // Order status options
-const orderStatuses = ['Pending', 'Confirmed', 'In Progress', 'Ready', 'Delivered', 'Cancelled'];
+const orderStatuses = ['Confirmed', 'Picked up', 'Delivered', 'Cancelled'];
 
 // State
 const orders = ref<Order[]>([]);
@@ -260,18 +423,25 @@ const formValid = ref(false);
 const showOrderDialog = ref(false);
 const showDeleteDialog = ref(false);
 const showOrderDatePicker = ref(false);
-const showDueDatePicker = ref(false);
+const showPickupDatePicker = ref(false);
+const showOrderDetailsDialog = ref(false);
+const selectedOrder = ref<Order | null>(null);
 
 // Current order being edited or created
 const currentOrder = ref<Order>({
   customerName: '',
   customerPhone: '',
   customerEmail: '',
+  orderSummary: '',
   orderDetails: '',
-  totalAmount: 0,
+  totalAmount: null as unknown as number,
+  deposit: null as unknown as number,
+  tip: 0,
+  isDelivery: false,
+  deliveryFee: 0,
+  pickupDate: new Date().toISOString().substr(0, 10),
   orderDate: new Date().toISOString().substr(0, 10),
-  dueDate: new Date().toISOString().substr(0, 10),
-  status: 'Pending'
+  status: 'Confirmed'
 });
 
 // Order to delete
@@ -282,12 +452,18 @@ const isEditMode = ref(false);
 
 // Computed properties for formatted dates
 const formattedOrderDate = computed(() => {
-  return formatDate(currentOrder.value.orderDate);
+  return formatDate(currentOrder.value.orderDate, true);
 });
 
-const formattedDueDate = computed(() => {
-  return formatDate(currentOrder.value.dueDate);
+const formattedPickupDate = computed(() => {
+  return formatDate(currentOrder.value.pickupDate, true);
 });
+
+// Function to open order details
+function openOrderDetails(order: Order) {
+  selectedOrder.value = order;
+  showOrderDetailsDialog.value = true;
+}
 
 // Load orders when component is mounted
 onMounted(async () => {
@@ -319,8 +495,8 @@ function openOrderDialog(order?: Order) {
     if (clonedOrder.orderDate) {
       clonedOrder.orderDate = clonedOrder.orderDate.split('T')[0];
     }
-    if (clonedOrder.dueDate) {
-      clonedOrder.dueDate = clonedOrder.dueDate.split('T')[0];
+    if (clonedOrder.pickupDate) {
+      clonedOrder.pickupDate = clonedOrder.pickupDate.split('T')[0];
     }
     
     currentOrder.value = clonedOrder;
@@ -331,11 +507,16 @@ function openOrderDialog(order?: Order) {
       customerName: '',
       customerPhone: '',
       customerEmail: '',
+      orderSummary: '',
       orderDetails: '',
-      totalAmount: 0,
+      totalAmount: null as unknown as number,
+      deposit: null as unknown as number,
+      tip: 0,
+      isDelivery: false,
+      deliveryFee: 0,
+      pickupDate: new Date().toISOString().substr(0, 10),
       orderDate: new Date().toISOString().substr(0, 10),
-      dueDate: new Date().toISOString().substr(0, 10),
-      status: 'Pending'
+      status: 'Confirmed'
     };
     isEditMode.value = false;
   }
@@ -355,7 +536,10 @@ async function saveOrder() {
       ...currentOrder.value,
       // Convert ISO date strings to LocalDateTime format for backend
       orderDate: `${currentOrder.value.orderDate}T00:00:00`,
-      dueDate: `${currentOrder.value.dueDate}T00:00:00`
+      pickupDate: `${currentOrder.value.pickupDate}T00:00:00`,
+      // Convert null values to zero for backend compatibility
+      totalAmount: currentOrder.value.totalAmount || 0,
+      deposit: currentOrder.value.deposit || 0
     };
     
     if (isEditMode.value && currentOrder.value.id) {
@@ -425,35 +609,102 @@ async function deleteOrder() {
 }
 
 // Format date for display
-function formatDate(dateString: string): string {
+function formatDate(dateString: string, withYear: boolean = false): string {
   if (!dateString) return '';
   
   const date = new Date(dateString);
   if (isNaN(date.getTime())) return dateString;
   
   return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
     month: 'short',
-    day: 'numeric'
+    day: 'numeric',
+    ...(withYear && { year: 'numeric' })
   }).format(date);
 }
 
 // Get color for status chip
 function getStatusColor(status: string): string {
   switch (status) {
-    case 'Pending': return 'blue';
-    case 'Confirmed': return 'purple';
-    case 'In Progress': return 'orange';
-    case 'Ready': return 'indigo';
+    case 'Confirmed': return 'info';
+    case 'Picked up': return 'success';
     case 'Delivered': return 'success';
     case 'Cancelled': return 'error';
     default: return 'grey';
   }
 }
+
+
 </script>
 
 <style scoped>
-.v-data-table {
-  margin-top: 16px;
+.order-card {
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  height: 100%;
+  width: 100%;  /* Ensure card takes full width of its column */
+  display: flex;
+  flex-direction: column;
+}
+
+.order-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1) !important;
+}
+
+.order-details {
+  white-space: pre-line;
+  word-break: break-word;
+}
+
+.orders-grid-container {
+  width: 100%;
+}
+
+.orders-grid {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+/* Ensure v-col elements have equal width within their breakpoints */
+.v-col {
+  display: flex;
+}
+
+/* Make sure the card takes up the full space in its column */
+.v-col > .v-card {
+  width: 100%;
+}
+
+/* Floating Action Button styles */
+.fab-button {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 5;
+  border-radius: 50%;
+}
+
+/* Order Details Dialog Styles */
+.order-details-card .v-card-item {
+  padding-bottom: 16px;
+}
+
+.order-details-text {
+  background-color: rgba(0, 0, 0, 0.02);
+  border-radius: 8px;
+  min-height: 100px;
+}
+
+.financial-summary {
+  margin-top: 8px;
+}
+
+.financial-item .v-card {
+  transition: transform 0.2s;
+}
+
+.financial-item .v-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
 }
 </style>

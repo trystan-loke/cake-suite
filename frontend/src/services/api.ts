@@ -46,10 +46,15 @@ export interface Order {
   customerName: string;
   customerPhone: string;
   customerEmail: string;
+  orderSummary: string;
   orderDetails: string;
-  totalAmount: number;
+  totalAmount: number | null;
+  deposit: number | null;
+  tip: number;
+  isDelivery: boolean;
+  deliveryFee: number;
+  pickupDate: string;
   orderDate: string;
-  dueDate: string;
   status: string;
 }
 
