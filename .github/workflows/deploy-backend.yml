@@ -13,6 +13,7 @@ env:
   REGION: us-east4
   REPOSITORY_NAME: cake-suite-repo
   IMAGE_NAME: us-east4-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/cake-suite-repo/cake-suite-api
+  ALLOWED_ORIGINS: ${{ vars.ALLOWED_ORIGINS }}
 
 jobs:
   build-and-deploy:
