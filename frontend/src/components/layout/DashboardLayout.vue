@@ -1,5 +1,5 @@
 <template>
-  <v-card class="h-screen">
+  <v-card>
     <v-layout>
       <v-app-bar color="primary">
         <v-app-bar-nav-icon variant="text" @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
@@ -53,4 +53,7 @@ watch(() => router.currentRoute.value, () => {
 </script>
 
 <style scoped>
+.v-layout {
+  min-height: 100vh;
+}
 </style>

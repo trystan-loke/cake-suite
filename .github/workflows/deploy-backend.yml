@@ -1,0 +1,95 @@
+name: Backend Build and Deploy
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+  workflow_dispatch: {} 
+
+env:
+  PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  SERVICE_NAME: cake-suite-api
+  REGION: us-east4
+  REPOSITORY_NAME: cake-suite-repo
+  IMAGE_NAME: us-east4-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/cake-suite-repo/cake-suite-api
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+        project_id: ${{ vars.GCP_PROJECT_ID }}
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+
+    - name: Configure Docker auth
+      run: gcloud auth configure-docker us-east4-docker.pkg.dev --quiet
+
+    - name: Create Artifact Registry repository (if not exists)
+      run: |
+        # Create repository if it doesn't exist
+        gcloud artifacts repositories create $REPOSITORY_NAME \
+          --repository-format=docker \
+          --location=$REGION \
+          --project=$PROJECT_ID \
+          --quiet || echo "Repository already exists"
+
+    - name: Build and push Docker image
+      id: build
+      run: |
+        # Generate image tag
+        if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          IMAGE_TAG="latest"
+        else
+          IMAGE_TAG="${{ github.sha }}"
+        fi
+        
+        IMAGE_FULL="$IMAGE_NAME:$IMAGE_TAG"
+        
+        # Build and push image
+        docker build -t $IMAGE_FULL ./backend
+        docker push $IMAGE_FULL
+        
+        echo "image=$IMAGE_FULL" >> $GITHUB_OUTPUT
+        echo "tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+    - name: Deploy to Cloud Run
+      run: |
+        gcloud run deploy $SERVICE_NAME \
+          --image ${{ steps.build.outputs.image }} \
+          --platform managed \
+          --region $REGION \
+          --allow-unauthenticated \
+          --port 8080 \
+          --memory 1Gi \
+          --cpu 1 \
+          --min-instances 0 \
+          --max-instances 2 \
+          --set-env-vars "SPRING_DATA_MONGODB_URI=${{ secrets.SPRING_DATA_MONGODB_URI }}" \
+          --set-env-vars "FIREBASE_CREDENTIALS_JSON=${{ secrets.GCP_BACKEND_SA_64 }}" \
+          --project $PROJECT_ID
+
+    - name: Get service URL
+      run: |
+        SERVICE_URL=$(gcloud run services describe $SERVICE_NAME --region $REGION --project $PROJECT_ID --format="value(status.url)")
+        echo "Service deployed at: $SERVICE_URL"
+        echo "SERVICE_URL=$SERVICE_URL" >> $GITHUB_ENV
+
+    - name: Output deployment info
+      run: |
+        echo "✅ Backend deployment successful!"
+        echo "🔗 Service URL: $SERVICE_URL"
+        echo "🏷️  Image: ${{ steps.build.outputs.image }}"
+        echo "📍 Region: $REGION"

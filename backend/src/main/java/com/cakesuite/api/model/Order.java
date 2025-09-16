@@ -23,13 +23,20 @@ public class Order {
     private String customerPhone;
     private String customerEmail;
     
+    private String orderSummary;
     private String orderDetails;
     private BigDecimal totalAmount;
+    private BigDecimal deposit;
+    private BigDecimal tip;
+    
+    private boolean isDelivery;
+    private BigDecimal deliveryFee;
+    private LocalDateTime pickupDate;
     
     private LocalDateTime orderDate;
-    private LocalDateTime dueDate;
     
-    private String status;
+    @Builder.Default
+    private String status = "Confirmed";
     
     private String userId;  // Firebase UID of the user who created the order
 }

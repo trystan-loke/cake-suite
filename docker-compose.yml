@@ -16,5 +16,27 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    networks:
+      - cake-suite-network
+
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cake-suite-backend
+    ports:
+      - "8080:8080"
+    env_file:
+      - backend/.env
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - cake-suite-network
+
+networks:
+  cake-suite-network:
+    driver: bridge
+
 volumes:
   mongodb_data:
