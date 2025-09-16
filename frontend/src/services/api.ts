@@ -1,5 +1,8 @@
 import { auth } from '../firebase';
 
+// Get the API base URL from environment variables
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+
 /**
  * API service for handling HTTP requests
  */
@@ -25,9 +28,8 @@ export async function apiRequest<T>(
     headers,
     body: body ? JSON.stringify(body) : undefined,
   };
-  
-  const response = await fetch(`/api${url}`, options);
-  
+
+  const response = await fetch(`${API_BASE_URL}${url}`, options);  
   if (!response.ok) {
     throw new Error(`API Error: ${response.status} ${response.statusText}`);
   }
