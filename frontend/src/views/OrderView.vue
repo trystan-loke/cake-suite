@@ -125,7 +125,8 @@
                     required
                     :rules="[
                       v => !!v || 'Amount is required',
-                      v => Number(v) > 0 || 'Amount must be greater than 0'
+                      v => Number(v) > 0 || 'Amount must be greater than 0',
+                      v => Number(v) <= 10000 || 'Amount cannot be greater than 10000'
                     ]"
                   ></v-text-field>
                 </v-col>
