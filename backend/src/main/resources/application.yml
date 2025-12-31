@@ -4,3 +4,11 @@ spring:
       uri: ${SPRING_DATA_MONGODB_URI}
   config:
     import: "optional:file:.env[.properties]"
+
+gcp:
+  storage:
+    bucket-name: ${GCS_BUCKET_NAME}
+    upload-path: "file/"
+    upload-path-temp: "file/temp/"
+    signed-url-expiry: 2 # In minutes
+    max-file-size: 10 # In MB
