@@ -472,8 +472,8 @@ const currentOrder = ref<Order>({
   tip: 0,
   isDelivery: false,
   deliveryFee: 0,
-  pickupDate: new Date().toISOString().substr(0, 10),
-  orderDate: new Date().toISOString().substr(0, 10),
+  pickupDate: new Date().toISOString(),
+  orderDate: new Date().toISOString(),
   status: 'Confirmed',
   imagePaths: []
 });
@@ -579,8 +579,8 @@ async function saveOrder() {
     const orderToSave = {
       ...currentOrder.value,
       // Convert ISO date strings to LocalDateTime format for backend
-      orderDate: `${currentOrder.value.orderDate}T00:00:00`,
-      pickupDate: `${currentOrder.value.pickupDate}T00:00:00`,
+      orderDate: new Date(currentOrder.value.orderDate).toISOString(),
+      pickupDate: new Date(currentOrder.value.pickupDate).toISOString(),
       // Convert null values to zero for backend compatibility
       totalAmount: currentOrder.value.totalAmount || 0,
       deposit: currentOrder.value.deposit || 0,
