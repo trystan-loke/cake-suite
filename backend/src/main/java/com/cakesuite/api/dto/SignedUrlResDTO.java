@@ -9,7 +9,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SignedUrlDTO {
+public class SignedUrlResDTO {
   private String signedUrl;
   private String tempPath;
+  private String fileName;
 }

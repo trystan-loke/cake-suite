@@ -110,9 +110,40 @@
                     v-model="currentOrder.orderDetails"
                     label="Order Details"
                     rows="8"
-                    required
-                    :rules="[v => !!v || 'Order details are required']"
                   ></v-textarea>
+                </v-col>
+
+                <v-col cols="12" md="12">
+                  <v-file-input
+                    ref="fileInputRef"
+                    prepend-icon=""
+                    prepend-inner-icon="$upload"
+                    label="Upload Images"
+                    :multiple="true"
+                    v-model="newFiles"
+                    @update:model-value="handleFileChange"
+                    filter-by-type="image/*"
+                    accept="image/*"
+                  ></v-file-input>
+                </v-col>
+                
+                <v-col cols="12" md="12">
+                  <v-sheet color="grey-lighten-4" elevation="1">
+                    <v-slide-group show-arrows>
+                      <v-slide-group-item v-for="(uploadedFile, index) in uploadedFiles" :key="index" v-slot="{ isSelected, toggle }">
+                        <v-card :color="isSelected ? 'primary' : 'grey-lighten-1'" class="ma-4" height="100" width="100"
+                          @click="toggle">
+                          <img :src="uploadedFile.url" alt="preview" style="width: 100%; height: 100%; object-fit: cover;"/>
+                          <div v-if="isSelected"  class="d-flex fill-height align-center justify-center" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); cursor: pointer;">
+                            <v-scale-transition>
+                              <v-icon color="white" icon="$delete"
+                                size="24" @click="removeImage(index)"></v-icon>
+                            </v-scale-transition>
+                          </div>
+                        </v-card>
+                      </v-slide-group-item>
+                    </v-slide-group>
+                  </v-sheet>
                 </v-col>
 
                 <!-- Financial Information -->
@@ -405,7 +436,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import { OrderAPI, type Order } from '../services/api';
+import { OrderAPI, type Order } from '../services/order-api';
+import { FileAPI, type SignedUrlReq } from '../services/file-api';
 import { globalNotifications } from '../composables/notifications';
 
 // Order status options
@@ -442,8 +474,18 @@ const currentOrder = ref<Order>({
   deliveryFee: 0,
   pickupDate: new Date().toISOString().substr(0, 10),
   orderDate: new Date().toISOString().substr(0, 10),
-  status: 'Confirmed'
+  status: 'Confirmed',
+  imagePaths: []
 });
+
+interface UploadedFile {
+  url: string;
+  tempPath: string;
+}
+
+const newFiles = ref(<File[]>[]);
+const uploadedFiles = ref<UploadedFile[]>([]);
+const fileInputRef = ref();
 
 // Order to delete
 const orderToDelete = ref<Order | null>(null);
@@ -517,7 +559,8 @@ function openOrderDialog(order?: Order) {
       deliveryFee: 0,
       pickupDate: new Date().toISOString().substr(0, 10),
       orderDate: new Date().toISOString().substr(0, 10),
-      status: 'Confirmed'
+      status: 'Confirmed',
+      imagePaths: []
     };
     isEditMode.value = false;
   }
@@ -540,7 +583,8 @@ async function saveOrder() {
       pickupDate: `${currentOrder.value.pickupDate}T00:00:00`,
       // Convert null values to zero for backend compatibility
       totalAmount: currentOrder.value.totalAmount || 0,
-      deposit: currentOrder.value.deposit || 0
+      deposit: currentOrder.value.deposit || 0,
+      imagePaths: uploadedFiles.value.map(file => file.tempPath)
     };
     
     if (isEditMode.value && currentOrder.value.id) {
@@ -563,6 +607,7 @@ async function saveOrder() {
     
     // Close dialog on success
     showOrderDialog.value = false;
+    uploadedFiles.value = [];
     
     // Refresh orders list to ensure we have latest data
     await loadOrders();
@@ -634,6 +679,38 @@ function getStatusColor(status: string): string {
   }
 }
 
+async function handleFileChange(files: File | File[]) {
+  const curFiles = Array.isArray(files) ? files : [files];
+  const signedUrls = await FileAPI.getSignedUrl(curFiles.map(file => ({
+    fileName: file.name,
+    fileType: file.type,
+    fileSize: file.size / 1024 / 1024 // Convert to MB
+  })));
+  curFiles.forEach(file => {
+    const filteredSignedUrls = signedUrls.filter(signedUrl => {
+      return signedUrl.fileName === file.name;
+    })
+
+    fetch(filteredSignedUrls[0].signedUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': file.type
+      },
+      body: file
+    });
+
+    uploadedFiles.value.push({
+      url: URL.createObjectURL(file),
+      tempPath: filteredSignedUrls[0].tempPath
+    })
+  })
+  newFiles.value = [];
+  fileInputRef.value.blur();
+}
+
+function removeImage(index: number) {
+  uploadedFiles.value.splice(index, 1);
+}
 
 </script>
 
