@@ -132,6 +132,7 @@ public class OrderService {
                 .tip(orderDTO.getTip())
                 .isDelivery(orderDTO.isDelivery())
                 .deliveryFee(orderDTO.getDeliveryFee())
+                .orderDate(orderDTO.getOrderDate())
                 .pickupDate(orderDTO.getPickupDate())
                 .status(orderDTO.getStatus())
                 .images(orderDTO.getImagePaths() != null ? orderDTO.getImagePaths().stream()
