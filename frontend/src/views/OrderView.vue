@@ -557,8 +557,8 @@ function openOrderDialog(order?: Order) {
       tip: 0,
       isDelivery: false,
       deliveryFee: 0,
-      pickupDate: new Date().toISOString().substr(0, 10),
-      orderDate: new Date().toISOString().substr(0, 10),
+      pickupDate: new Date().toISOString(),
+      orderDate: new Date().toISOString(),
       status: 'Confirmed',
       imagePaths: []
     };
