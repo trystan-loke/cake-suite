@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -16,6 +17,8 @@ import java.util.stream.Collectors;
 public class OrderService {
     
     private final OrderRepository orderRepository;
+
+    private final FileService fileService;
     
     public List<OrderDTO> getAllOrders(User user) {
         List<Order> orders = orderRepository.findByUserId(user.getId());
@@ -37,9 +40,19 @@ public class OrderService {
     }
     
     public OrderDTO createOrder(OrderDTO orderDTO, User user) {
+        // Move temp image path to permanent path
+        orderDTO.getImagePaths().forEach(imagePath -> {
+            // Extract filename from temp path
+            String filename = imagePath.substring(imagePath.lastIndexOf('/') + 1);
+
+            // Construct new permanent path with user ID folder
+            String permanentPath = "file/" + user.getId() + "/" + filename.substring(filename.indexOf('_') + 1);
+
+            fileService.moveFile(imagePath, permanentPath);
+            imagePath = permanentPath; // Update the image URL
+        });
         Order order = convertToEntity(orderDTO);
         order.setUserId(user.getId());
-        order.setOrderDate(LocalDateTime.now());
         Order savedOrder = orderRepository.save(order);
         return convertToDTO(savedOrder);
     }
@@ -99,6 +112,10 @@ public class OrderService {
                 .pickupDate(order.getPickupDate())
                 .orderDate(order.getOrderDate())
                 .status(order.getStatus())
+                .imagePaths(order.getImages() != null ? order.getImages().stream()
+                        .map(Order.OrderImage::getImageUrl)
+                        .collect(Collectors.toList())
+                        : new ArrayList<>())
                 .build();
     }
     
@@ -115,8 +132,16 @@ public class OrderService {
                 .tip(orderDTO.getTip())
                 .isDelivery(orderDTO.isDelivery())
                 .deliveryFee(orderDTO.getDeliveryFee())
+                .orderDate(orderDTO.getOrderDate())
                 .pickupDate(orderDTO.getPickupDate())
                 .status(orderDTO.getStatus())
+                .images(orderDTO.getImagePaths() != null ? orderDTO.getImagePaths().stream()
+                    .map(imagePath -> Order.OrderImage.builder()
+                            .imageUrl(imagePath)
+                            .uploadedAt(LocalDateTime.now())
+                            .build())
+                    .collect(Collectors.toList())
+                    : new ArrayList<>())
                 .build();
     }
 }
