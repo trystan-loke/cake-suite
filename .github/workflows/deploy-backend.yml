@@ -79,6 +79,7 @@ jobs:
           --max-instances 2 \
           --set-env-vars "SPRING_DATA_MONGODB_URI=${{ secrets.SPRING_DATA_MONGODB_URI }}" \
           --set-env-vars "FIREBASE_CREDENTIALS_JSON=${{ secrets.GCP_BACKEND_SA_64 }}" \
+          --set-env-vars "GCS_BUCKET_NAME=${{ vars.GCS_BUCKET_NAME }}" \
           --set-env-vars=^@@^ALLOWED_ORIGINS=${{ vars.ALLOWED_ORIGINS }} \
           --project $PROJECT_ID
 
