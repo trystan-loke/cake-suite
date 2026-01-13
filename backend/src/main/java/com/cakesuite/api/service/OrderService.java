@@ -4,6 +4,8 @@ import com.cakesuite.api.dto.OrderDTO;
 import com.cakesuite.api.model.Order;
 import com.cakesuite.api.model.User;
 import com.cakesuite.api.repository.OrderRepository;
+import com.cakesuite.api.util.IdGenerator;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -40,18 +42,20 @@ public class OrderService {
     }
     
     public OrderDTO createOrder(OrderDTO orderDTO, User user) {
+        String newOrderNo = IdGenerator.generateOrderNo();
         // Move temp image path to permanent path
         orderDTO.getImagePaths().forEach(imagePath -> {
             // Extract filename from temp path
             String filename = imagePath.substring(imagePath.lastIndexOf('/') + 1);
 
             // Construct new permanent path with user ID folder
-            String permanentPath = "file/" + user.getId() + "/" + filename.substring(filename.indexOf('_') + 1);
+            String permanentPath = "file/" + user.getId() + "/" + newOrderNo + "/" + filename.substring(filename.indexOf('_') + 1);
 
             fileService.moveFile(imagePath, permanentPath);
             imagePath = permanentPath; // Update the image URL
         });
         Order order = convertToEntity(orderDTO);
+        order.setOrderNo(newOrderNo);
         order.setUserId(user.getId());
         Order savedOrder = orderRepository.save(order);
         return convertToDTO(savedOrder);
