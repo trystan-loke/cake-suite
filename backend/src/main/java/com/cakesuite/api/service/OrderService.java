@@ -44,6 +44,7 @@ public class OrderService {
     public OrderDTO createOrder(OrderDTO orderDTO, User user) {
         String newOrderNo = IdGenerator.generateOrderNo();
         // Move temp image path to permanent path
+        List<String> newImagePaths = new ArrayList<>();
         orderDTO.getImagePaths().forEach(imagePath -> {
             // Extract filename from temp path
             String filename = imagePath.substring(imagePath.lastIndexOf('/') + 1);
@@ -52,8 +53,9 @@ public class OrderService {
             String permanentPath = "file/" + user.getId() + "/" + newOrderNo + "/" + filename.substring(filename.indexOf('_') + 1);
 
             fileService.moveFile(imagePath, permanentPath);
-            imagePath = permanentPath; // Update the image URL
+            newImagePaths.add(permanentPath);
         });
+        orderDTO.setImagePaths(newImagePaths);
         Order order = convertToEntity(orderDTO);
         order.setOrderNo(newOrderNo);
         order.setUserId(user.getId());
