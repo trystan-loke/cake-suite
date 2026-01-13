@@ -9,6 +9,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -25,6 +27,7 @@ public class OrderDTO {
     private BigDecimal deposit;
     private BigDecimal tip;
     
+    @JsonProperty("isDelivery")
     private boolean isDelivery;
     private BigDecimal deliveryFee;
     private LocalDateTime pickupDate;

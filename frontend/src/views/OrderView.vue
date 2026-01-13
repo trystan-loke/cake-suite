@@ -92,6 +92,10 @@
                     v-model="currentOrder.customerEmail"
                     label="Email"
                     type="email"
+                    autocomplete="email"
+                    :rules="[
+                      v => !v || /.+@.+\..+/.test(v) || 'Invalid email format'
+                    ]"
                   ></v-text-field>
                 </v-col>
 
@@ -168,6 +172,10 @@
                     label="Deposit"
                     type="number"
                     prefix="$"
+                    :rules="[
+                    v => Number(v) >= 0 || 'Amount must be greater or equal to 0',
+                    v => Number(v) <= 10000 || 'Amount cannot be greater than 10000'
+                  ]"
                   ></v-text-field>
                 </v-col>
                 

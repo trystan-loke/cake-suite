@@ -2,6 +2,7 @@ spring:
   data:
     mongodb:
       uri: ${SPRING_DATA_MONGODB_URI}
+      auto-index-creation: true
   config:
     import: "optional:file:.env[.properties]"
 
