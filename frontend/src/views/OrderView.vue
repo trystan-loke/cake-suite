@@ -92,6 +92,10 @@
                     v-model="currentOrder.customerEmail"
                     label="Email"
                     type="email"
+                    autocomplete="email"
+                    :rules="[
+                      v => !v || /.+@.+\..+/.test(v) || 'Invalid email format'
+                    ]"
                   ></v-text-field>
                 </v-col>
 
