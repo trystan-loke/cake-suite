@@ -1,12 +1,19 @@
 package com.cakesuite.api.repository;
 
-import com.cakesuite.api.model.Order;
+import java.time.LocalDateTime;
+import java.util.List;
+
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import com.cakesuite.api.model.Order;
 
 @Repository
 public interface OrderRepository extends MongoRepository<Order, String> {
     List<Order> findByUserId(String userId);
+
+    @Query("{ 'userId': ?0, 'pickupDate': { $gte: ?1 } }")
+    List<Order> findFromDate(String userId, LocalDateTime from, Sort sort);
 }

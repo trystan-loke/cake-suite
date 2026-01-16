@@ -7,8 +7,11 @@ import com.cakesuite.api.repository.OrderRepository;
 import com.cakesuite.api.util.IdGenerator;
 
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +26,7 @@ public class OrderService {
     private final FileService fileService;
     
     public List<OrderDTO> getAllOrders(User user) {
-        List<Order> orders = orderRepository.findByUserId(user.getId());
+        List<Order> orders = orderRepository.findFromDate(user.getId(), LocalDate.now().atStartOfDay(), Sort.by(Sort.Direction.ASC, "pickupDate"));
         List<OrderDTO> result = orders.stream()
                 .map(o -> {
                     OrderDTO dto = convertToDTO(o);
