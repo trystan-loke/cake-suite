@@ -34,6 +34,9 @@ public class FileService {
   @Value("${gcp.storage.signed-url-expiry}")
   private int signedUrlExpiry;
 
+  @Value("${gcp.storage.signed-url-read-expiry}")
+  private int signedUrlReadExpiry;
+
   @Value("${gcp.storage.max-file-size}")
   private int maxFileSize;
 
@@ -86,5 +89,18 @@ public class FileService {
 
     storage.copy(request).getResult();
     storage.delete(source);
+  }
+
+  public String getReadSignedUrl(String filePath) {
+    BlobInfo blobInfo = BlobInfo.newBuilder(bucketName, filePath).build();
+
+    URL signedUrl = storage.signUrl(
+        blobInfo,
+        signedUrlReadExpiry,
+        TimeUnit.MINUTES,
+        Storage.SignUrlOption.httpMethod(HttpMethod.GET),
+        Storage.SignUrlOption.withV4Signature());
+
+    return signedUrl.toString();
   }
 }

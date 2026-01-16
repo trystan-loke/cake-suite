@@ -24,9 +24,16 @@ public class OrderService {
     
     public List<OrderDTO> getAllOrders(User user) {
         List<Order> orders = orderRepository.findByUserId(user.getId());
-        return orders.stream()
-                .map(this::convertToDTO)
+        List<OrderDTO> result = orders.stream()
+                .map(o -> {
+                    OrderDTO dto = convertToDTO(o);
+                    dto.setImagePaths(dto.getImagePaths().stream()
+                        .map(fileService::getReadSignedUrl)
+                        .collect(Collectors.toList()));
+                    return dto;
+                })
                 .collect(Collectors.toList());
+        return result;
     }
     
     public OrderDTO getOrderById(String id, User user) {

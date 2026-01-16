@@ -50,6 +50,12 @@
               ></v-btn>
             </v-card-title>
             <v-card-text class="d-flex flex-column">
+              <v-slide-group show-arrows>
+                <v-slide-group-item v-for="imagePath in order.imagePaths" :key="imagePath">
+                    <img :src="imagePath" alt="preview" class="mb-2" height="50" width="50"
+                      style="object-fit: cover;" />
+                </v-slide-group-item>
+              </v-slide-group>
               <div class="order-details mb-2">{{ order.orderDetails }}</div>
               <div class="d-flex justify-space-between align-center mt-auto">
                 <div><strong>${{ Number(order.totalAmount || 0).toFixed(2) }}</strong></div>

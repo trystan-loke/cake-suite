@@ -12,4 +12,5 @@ gcp:
     upload-path: "file/"
     upload-path-temp: "file/temp/"
     signed-url-expiry: 2 # In minutes
+    signed-url-read-expiry: 10 # In minutes
     max-file-size: 10 # In MB
