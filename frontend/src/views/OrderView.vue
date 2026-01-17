@@ -318,6 +318,13 @@
               size="small"
               class="ms-2"
             ></v-chip>
+            <v-btn
+              icon="$close"
+              variant="text"
+              size="small"
+              @click="showOrderDetailsDialog = false"
+              class="ms-2"
+            ></v-btn>
           </template>
         </v-card-item>
 
