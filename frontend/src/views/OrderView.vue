@@ -331,6 +331,64 @@
         <v-divider></v-divider>
         
         <v-card-text class="pt-4">
+          <!-- Order details section -->
+          <h3 class="text-h6 mb-3">Order Details</h3>
+          <v-card flat border class="mb-4 pa-3 order-details-text">
+            <p style="white-space: pre-line">{{ selectedOrder.orderDetails }}</p>
+          </v-card>
+
+          <v-slide-group show-arrows>
+            <v-slide-group-item v-for="imagePath in selectedOrder.imagePaths" :key="imagePath">
+              <img :src="imagePath" alt="preview" class="mb-2" height="200" width="200" style="object-fit: cover;" />
+            </v-slide-group-item>
+          </v-slide-group>
+
+          <v-divider class="my-4"></v-divider>
+
+          <!-- Financial summary -->
+          <!-- <h3 class="text-h6 mb-3">Financial Summary</h3> -->
+          <v-row class="financial-summary">
+            <v-col cols="6" sm="3" class="financial-item">
+              <v-card flat border height="100%">
+                <v-card-text class="text-center">
+                  <div class="text-subtitle-2">Total Amount</div>
+                  <div class="text-h5 mt-2">${{ Number(selectedOrder.totalAmount || 0).toFixed(2) }}</div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+
+            <v-col cols="6" sm="3" v-if="selectedOrder.deposit && Number(selectedOrder.deposit) > 0"
+              class="financial-item">
+              <v-card flat border height="100%">
+                <v-card-text class="text-center">
+                  <div class="text-subtitle-2">Deposit</div>
+                  <div class="text-h5 mt-2">${{ Number(selectedOrder.deposit).toFixed(2) }}</div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+
+            <v-col cols="6" sm="3" v-if="selectedOrder.tip && Number(selectedOrder.tip) > 0" class="financial-item">
+              <v-card flat border height="100%">
+                <v-card-text class="text-center">
+                  <div class="text-subtitle-2">Tip</div>
+                  <div class="text-h5 mt-2">${{ Number(selectedOrder.tip).toFixed(2) }}</div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+
+            <v-col cols="6" sm="3"
+              v-if="selectedOrder.isDelivery && selectedOrder.deliveryFee && Number(selectedOrder.deliveryFee) > 0"
+              class="financial-item">
+              <v-card flat border height="100%">
+                <v-card-text class="text-center">
+                  <div class="text-subtitle-2">Delivery Fee</div>
+                  <div class="text-h5 mt-2">${{ Number(selectedOrder.deliveryFee).toFixed(2) }}</div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+
+
           <!-- Order info section with key details -->
           <v-row>
             <!-- Customer information -->
@@ -380,54 +438,6 @@
                   </v-list-item-title>
                 </v-list-item>
               </v-list>
-            </v-col>
-          </v-row>
-
-          <v-divider class="my-4"></v-divider>
-          
-          <!-- Order details section -->
-          <h3 class="text-h6 mb-3">Order Details</h3>
-          <v-card flat border class="mb-4 pa-3 order-details-text">
-            <p style="white-space: pre-line">{{ selectedOrder.orderDetails }}</p>
-          </v-card>
-          
-          <!-- Financial summary -->
-          <h3 class="text-h6 mb-3">Financial Summary</h3>
-          <v-row class="financial-summary">
-            <v-col cols="6" sm="3" class="financial-item">
-              <v-card flat border height="100%">
-                <v-card-text class="text-center">
-                  <div class="text-subtitle-2">Total Amount</div>
-                  <div class="text-h5 mt-2">${{ Number(selectedOrder.totalAmount || 0).toFixed(2) }}</div>
-                </v-card-text>
-              </v-card>
-            </v-col>
-            
-            <v-col cols="6" sm="3" v-if="selectedOrder.deposit && Number(selectedOrder.deposit) > 0" class="financial-item">
-              <v-card flat border height="100%">
-                <v-card-text class="text-center">
-                  <div class="text-subtitle-2">Deposit</div>
-                  <div class="text-h5 mt-2">${{ Number(selectedOrder.deposit).toFixed(2) }}</div>
-                </v-card-text>
-              </v-card>
-            </v-col>
-            
-            <v-col cols="6" sm="3" v-if="selectedOrder.tip && Number(selectedOrder.tip) > 0" class="financial-item">
-              <v-card flat border height="100%">
-                <v-card-text class="text-center">
-                  <div class="text-subtitle-2">Tip</div>
-                  <div class="text-h5 mt-2">${{ Number(selectedOrder.tip).toFixed(2) }}</div>
-                </v-card-text>
-              </v-card>
-            </v-col>
-            
-            <v-col cols="6" sm="3" v-if="selectedOrder.isDelivery && selectedOrder.deliveryFee && Number(selectedOrder.deliveryFee) > 0" class="financial-item">
-              <v-card flat border height="100%">
-                <v-card-text class="text-center">
-                  <div class="text-subtitle-2">Delivery Fee</div>
-                  <div class="text-h5 mt-2">${{ Number(selectedOrder.deliveryFee).toFixed(2) }}</div>
-                </v-card-text>
-              </v-card>
             </v-col>
           </v-row>
         </v-card-text>
