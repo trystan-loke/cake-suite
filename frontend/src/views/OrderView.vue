@@ -550,7 +550,7 @@ async function loadOrders() {
   error.value = '';
   
   try {
-    orders.value = await OrderAPI.getAllOrders();
+    orders.value = await OrderAPI.getAllOrders(new Date(new Date().setHours(0, 0, 0, 0)).toISOString());
   } catch (err) {
     console.error('Failed to load orders:', err);
     error.value = 'Failed to load orders. Please try again.';
@@ -564,15 +564,6 @@ function openOrderDialog(order?: Order) {
   if (order) {
     // Edit mode - clone the order to avoid directly modifying the table data
     const clonedOrder = { ...order };
-    
-    // Convert dates from backend format to date picker format (YYYY-MM-DD)
-    if (clonedOrder.orderDate) {
-      clonedOrder.orderDate = clonedOrder.orderDate.split('T')[0];
-    }
-    if (clonedOrder.pickupDate) {
-      clonedOrder.pickupDate = clonedOrder.pickupDate.split('T')[0];
-    }
-    
     currentOrder.value = clonedOrder;
     isEditMode.value = true;
   } else {
@@ -595,7 +586,6 @@ function openOrderDialog(order?: Order) {
     };
     isEditMode.value = false;
   }
-  
   showOrderDialog.value = true;
 }
 
@@ -609,7 +599,7 @@ async function saveOrder() {
     // Create a copy of the current order with properly formatted dates
     const orderToSave = {
       ...currentOrder.value,
-      // Convert ISO date strings to LocalDateTime format for backend
+      // Convert ISO date strings for backend
       orderDate: new Date(currentOrder.value.orderDate).toISOString(),
       pickupDate: new Date(currentOrder.value.pickupDate).toISOString(),
       // Convert null values to zero for backend compatibility

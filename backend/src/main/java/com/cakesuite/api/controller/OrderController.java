@@ -9,6 +9,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.util.List;
 
 @RestController
@@ -19,9 +20,9 @@ public class OrderController {
     private final OrderService orderService;
     
     @GetMapping
-    public ResponseEntity<List<OrderDTO>> getAllOrders() {
+    public ResponseEntity<List<OrderDTO>> getAllOrders(@RequestParam(value = "from", required = false) Instant from) {
         User currentUser = getCurrentUser();
-        return ResponseEntity.ok(orderService.getAllOrders(currentUser));
+        return ResponseEntity.ok(orderService.getAllOrders(currentUser, from));
     }
     
     @GetMapping("/{id}")

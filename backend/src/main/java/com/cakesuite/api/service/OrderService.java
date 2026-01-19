@@ -11,8 +11,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,8 +26,11 @@ public class OrderService {
 
     private final FileService fileService;
     
-    public List<OrderDTO> getAllOrders(User user) {
-        List<Order> orders = orderRepository.findFromDate(user.getId(), LocalDate.now().atStartOfDay(), Sort.by(Sort.Direction.ASC, "pickupDate"));
+    public List<OrderDTO> getAllOrders(User user, Instant from) {
+        if(from == null) {
+            from = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant();
+        }
+        List<Order> orders = orderRepository.findFromDate(user.getId(), from, Sort.by(Sort.Direction.ASC, "pickupDate"));
         List<OrderDTO> result = orders.stream()
                 .map(o -> {
                     OrderDTO dto = convertToDTO(o);
@@ -155,7 +159,7 @@ public class OrderService {
                 .images(orderDTO.getImagePaths() != null ? orderDTO.getImagePaths().stream()
                     .map(imagePath -> Order.OrderImage.builder()
                             .imageUrl(imagePath)
-                            .uploadedAt(LocalDateTime.now())
+                            .uploadedAt(Instant.now())
                             .build())
                     .collect(Collectors.toList())
                     : new ArrayList<>())

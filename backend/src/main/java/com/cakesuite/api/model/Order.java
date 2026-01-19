@@ -9,7 +9,7 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -37,9 +37,9 @@ public class Order {
     
     private boolean isDelivery;
     private BigDecimal deliveryFee;
-    private LocalDateTime pickupDate;
+    private Instant pickupDate;
     
-    private LocalDateTime orderDate;
+    private Instant orderDate;
     
     @Builder.Default
     private String status = "Confirmed";
@@ -57,6 +57,6 @@ public class Order {
         @Builder.Default
         private String id = UUID.randomUUID().toString();;
         private String imageUrl;
-        private LocalDateTime uploadedAt;
+        private Instant uploadedAt;
     }
 }
