@@ -94,6 +94,7 @@ public class OrderService {
         existingOrder.setDelivery(orderDTO.isDelivery());
         existingOrder.setDeliveryFee(orderDTO.getDeliveryFee());
         existingOrder.setPickupDate(orderDTO.getPickupDate());
+        existingOrder.setOrderDate(orderDTO.getOrderDate());
         existingOrder.setStatus(orderDTO.getStatus());
         
         Order updatedOrder = orderRepository.save(existingOrder);
