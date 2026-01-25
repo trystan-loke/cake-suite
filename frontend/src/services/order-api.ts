@@ -58,12 +58,12 @@ export interface Order {
   pickupDate: string;
   orderDate: string;
   status: string;
-  imagePaths: string[] | null;
+  images: { url: string; path: string }[];
 }
 
 // Order API Service
 export const OrderAPI = {
-  getAllOrders: () => apiRequest<Order[]>('/orders'),
+  getAllOrders: (from?: string) => apiRequest<Order[]>(from ? `/orders?from=${from}` : '/orders'),
   
   getOrderById: (id: string) => apiRequest<Order>(`/orders/${id}`),
   

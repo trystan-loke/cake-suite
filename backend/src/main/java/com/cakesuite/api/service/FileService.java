@@ -34,6 +34,9 @@ public class FileService {
   @Value("${gcp.storage.signed-url-expiry}")
   private int signedUrlExpiry;
 
+  @Value("${gcp.storage.signed-url-read-expiry}")
+  private int signedUrlReadExpiry;
+
   @Value("${gcp.storage.max-file-size}")
   private int maxFileSize;
 
@@ -78,6 +81,35 @@ public class FileService {
   public void moveFile(String sourcePath, String destinationPath) {
     BlobId source = BlobId.of(bucketName, sourcePath);
     BlobId target = BlobId.of(bucketName, destinationPath);
+
+    CopyRequest request = CopyRequest.newBuilder()
+        .setSource(source)
+        .setTarget(target)
+        .build();
+
+    storage.copy(request).getResult();
+    storage.delete(source);
+  }
+
+  public String getReadSignedUrl(String filePath) {
+    BlobInfo blobInfo = BlobInfo.newBuilder(bucketName, filePath).build();
+
+    URL signedUrl = storage.signUrl(
+        blobInfo,
+        signedUrlReadExpiry,
+        TimeUnit.MINUTES,
+        Storage.SignUrlOption.httpMethod(HttpMethod.GET),
+        Storage.SignUrlOption.withV4Signature());
+
+    return signedUrl.toString();
+  }
+
+  public void deleteFile(String filePath, String userId, String orderNo) {
+    // archive instead of delete
+    BlobId source = BlobId.of(bucketName, filePath);
+    String filename = filePath.substring(filePath.lastIndexOf('/') + 1);
+    String deletedPath = "file/" + userId + "/" + orderNo + "/deleted/" + filename;
+    BlobId target = BlobId.of(bucketName, deletedPath);
 
     CopyRequest request = CopyRequest.newBuilder()
         .setSource(source)

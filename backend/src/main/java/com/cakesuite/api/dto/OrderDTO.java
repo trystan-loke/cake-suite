@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -30,9 +30,18 @@ public class OrderDTO {
     @JsonProperty("isDelivery")
     private boolean isDelivery;
     private BigDecimal deliveryFee;
-    private LocalDateTime pickupDate;
+    private Instant pickupDate;
     
-    private LocalDateTime orderDate;
+    private Instant orderDate;
     private String status;
-    private List<String> imagePaths;
+    private List<ImageDTO> images;
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ImageDTO {
+        private String url;
+        private String path;
+    }
 }
