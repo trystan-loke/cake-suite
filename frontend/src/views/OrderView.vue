@@ -91,6 +91,10 @@
                   <v-text-field
                     v-model="currentOrder.customerPhone"
                     label="Phone Number"
+                    :rules="[
+                      v => !v || /^[\d\s\-\+\(\)]+$/.test(v) || 'Invalid phone number format',
+                      v => !v || v.replace(/\D/g, '').length >= 10 || 'Phone number must have at least 10 digits'
+                    ]"
                   ></v-text-field>
                 </v-col>
                 <v-col cols="12">
