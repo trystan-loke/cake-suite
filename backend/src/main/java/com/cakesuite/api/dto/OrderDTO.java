@@ -34,5 +34,14 @@ public class OrderDTO {
     
     private Instant orderDate;
     private String status;
-    private List<String> imagePaths;
+    private List<ImageDTO> images;
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ImageDTO {
+        private String url;
+        private String path;
+    }
 }

@@ -103,4 +103,20 @@ public class FileService {
 
     return signedUrl.toString();
   }
+
+  public void deleteFile(String filePath, String userId, String orderNo) {
+    // archive instead of delete
+    BlobId source = BlobId.of(bucketName, filePath);
+    String filename = filePath.substring(filePath.lastIndexOf('/') + 1);
+    String deletedPath = "file/" + userId + "/" + orderNo + "/deleted/" + filename;
+    BlobId target = BlobId.of(bucketName, deletedPath);
+
+    CopyRequest request = CopyRequest.newBuilder()
+        .setSource(source)
+        .setTarget(target)
+        .build();
+
+    storage.copy(request).getResult();
+    storage.delete(source);
+  }
 }

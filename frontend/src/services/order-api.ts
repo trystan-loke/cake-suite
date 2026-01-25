@@ -58,7 +58,7 @@ export interface Order {
   pickupDate: string;
   orderDate: string;
   status: string;
-  imagePaths: string[] | null;
+  images: { url: string; path: string }[];
 }
 
 // Order API Service

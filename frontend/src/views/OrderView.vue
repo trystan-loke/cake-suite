@@ -51,8 +51,8 @@
             </v-card-title>
             <v-card-text class="d-flex flex-column">
               <v-slide-group show-arrows>
-                <v-slide-group-item v-for="imagePath in order.imagePaths" :key="imagePath">
-                    <img :src="imagePath" alt="preview" class="mb-2" height="50" width="50"
+                <v-slide-group-item v-for="image in order.images" :key="image.path">
+                    <img :src="image.url" alt="preview" class="mb-2" height="50" width="50"
                       style="object-fit: cover;" />
                 </v-slide-group-item>
               </v-slide-group>
@@ -342,8 +342,8 @@
           </v-card>
 
           <v-slide-group show-arrows>
-            <v-slide-group-item v-for="imagePath in selectedOrder.imagePaths" :key="imagePath">
-              <img :src="imagePath" alt="preview" class="mb-2" height="200" width="200" style="object-fit: cover;" />
+            <v-slide-group-item v-for="image in selectedOrder.images" :key="image.path">
+              <img :src="image.url" alt="preview" class="mb-2" height="200" width="200" style="object-fit: cover;" />
             </v-slide-group-item>
           </v-slide-group>
 
@@ -510,12 +510,12 @@ const currentOrder = ref<Order>({
   pickupDate: new Date().toISOString(),
   orderDate: new Date().toISOString(),
   status: 'Confirmed',
-  imagePaths: []
+  images: []
 });
 
 interface UploadedFile {
   url: string;
-  tempPath: string;
+  path: string;
 }
 
 const newFiles = ref(<File[]>[]);
@@ -570,6 +570,7 @@ function openOrderDialog(order?: Order) {
     const clonedOrder = { ...order };
     currentOrder.value = clonedOrder;
     isEditMode.value = true;
+    uploadedFiles.value = order.images;
   } else {
     // Create mode - reset to defaults
     currentOrder.value = {
@@ -586,10 +587,12 @@ function openOrderDialog(order?: Order) {
       pickupDate: new Date().toISOString(),
       orderDate: new Date().toISOString(),
       status: 'Confirmed',
-      imagePaths: []
+      images: []
     };
     isEditMode.value = false;
+    uploadedFiles.value = [];
   }
+  newFiles.value = [];
   showOrderDialog.value = true;
 }
 
@@ -609,7 +612,7 @@ async function saveOrder() {
       // Convert null values to zero for backend compatibility
       totalAmount: currentOrder.value.totalAmount || 0,
       deposit: currentOrder.value.deposit || 0,
-      imagePaths: uploadedFiles.value.map(file => file.tempPath)
+      images: uploadedFiles.value
     };
     
     if (isEditMode.value && currentOrder.value.id) {
@@ -726,7 +729,7 @@ async function handleFileChange(files: File | File[]) {
 
     uploadedFiles.value.push({
       url: URL.createObjectURL(file),
-      tempPath: filteredSignedUrls[0].tempPath
+      path: filteredSignedUrls[0].tempPath
     })
   })
   newFiles.value = [];

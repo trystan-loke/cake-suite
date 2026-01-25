@@ -8,6 +8,7 @@ import com.cakesuite.api.util.IdGenerator;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +26,9 @@ public class OrderService {
     private final OrderRepository orderRepository;
 
     private final FileService fileService;
+
+    @Value("${gcp.storage.upload-path-temp}")
+    private String tempPath;
     
     public List<OrderDTO> getAllOrders(User user, Instant from) {
         if(from == null) {
@@ -34,8 +38,11 @@ public class OrderService {
         List<OrderDTO> result = orders.stream()
                 .map(o -> {
                     OrderDTO dto = convertToDTO(o);
-                    dto.setImagePaths(dto.getImagePaths().stream()
-                        .map(fileService::getReadSignedUrl)
+                    dto.setImages(dto.getImages().stream()
+                        .map(image -> OrderDTO.ImageDTO.builder()
+                                .url(fileService.getReadSignedUrl(image.getPath()))
+                                .path(image.getPath())
+                                .build())
                         .collect(Collectors.toList()));
                     return dto;
                 })
@@ -58,18 +65,21 @@ public class OrderService {
     public OrderDTO createOrder(OrderDTO orderDTO, User user) {
         String newOrderNo = IdGenerator.generateOrderNo();
         // Move temp image path to permanent path
-        List<String> newImagePaths = new ArrayList<>();
-        orderDTO.getImagePaths().forEach(imagePath -> {
+        List<OrderDTO.ImageDTO> newImage = new ArrayList<>();
+        orderDTO.getImages().forEach(image -> {
             // Extract filename from temp path
-            String filename = imagePath.substring(imagePath.lastIndexOf('/') + 1);
+            String filename = image.getPath().substring(image.getPath().lastIndexOf('/') + 1);
 
             // Construct new permanent path with user ID folder
             String permanentPath = "file/" + user.getId() + "/" + newOrderNo + "/" + filename.substring(filename.indexOf('_') + 1);
 
-            fileService.moveFile(imagePath, permanentPath);
-            newImagePaths.add(permanentPath);
+            fileService.moveFile(image.getPath(), permanentPath);
+            newImage.add(OrderDTO.ImageDTO.builder()
+                .url(null)
+                .path(permanentPath)
+                .build());
         });
-        orderDTO.setImagePaths(newImagePaths);
+        orderDTO.setImages(newImage);
         Order order = convertToEntity(orderDTO);
         order.setOrderNo(newOrderNo);
         order.setUserId(user.getId());
@@ -84,6 +94,40 @@ public class OrderService {
         // Ensure the order belongs to the requesting user
         if (!existingOrder.getUserId().equals(user.getId())) {
             throw new RuntimeException("Access denied");
+        }
+
+        // Handle image updates
+        List<OrderDTO.ImageDTO> newImages = new ArrayList<>();
+        List<String> existingImageUrls = existingOrder.getImages() != null
+                ? existingOrder.getImages().stream()
+                        .map(Order.OrderImage::getImageUrl)
+                        .collect(Collectors.toList())
+                : new ArrayList<>();
+
+        if (orderDTO.getImages() != null) {
+            for (OrderDTO.ImageDTO image : orderDTO.getImages()) {
+                if (image.getPath().startsWith(tempPath)) {
+                    String filename = image.getPath().substring(image.getPath().lastIndexOf('/') + 1);
+
+                    String permanentPath = "file/" + user.getId() + "/" + existingOrder.getOrderNo() + "/"
+                            + filename.substring(filename.indexOf('_') + 1);
+
+                    fileService.moveFile(image.getPath(), permanentPath);
+                    newImages.add(OrderDTO.ImageDTO.builder()
+                        .url(null)
+                        .path(permanentPath)
+                        .build());
+                } else {
+                    newImages.add(image);
+                }
+            }
+
+            // Delete images that were removed (exist in old order but not in new)
+            for (String oldImageUrl : existingImageUrls) {
+                if (!newImages.stream().map(OrderDTO.ImageDTO::getPath).collect(Collectors.toList()).contains(oldImageUrl)) {
+                    fileService.deleteFile(oldImageUrl, user.getId(), existingOrder.getOrderNo());
+                }
+            }
         }
         
         // Update fields
@@ -100,6 +144,13 @@ public class OrderService {
         existingOrder.setPickupDate(orderDTO.getPickupDate());
         existingOrder.setOrderDate(orderDTO.getOrderDate());
         existingOrder.setStatus(orderDTO.getStatus());
+        // Update images
+        existingOrder.setImages(newImages.stream()
+                .map(image -> Order.OrderImage.builder()
+                        .imageUrl(image.getPath())
+                        .uploadedAt(Instant.now())
+                        .build())
+                .collect(Collectors.toList()));
         
         Order updatedOrder = orderRepository.save(existingOrder);
         return convertToDTO(updatedOrder);
@@ -133,8 +184,11 @@ public class OrderService {
                 .pickupDate(order.getPickupDate())
                 .orderDate(order.getOrderDate())
                 .status(order.getStatus())
-                .imagePaths(order.getImages() != null ? order.getImages().stream()
-                        .map(Order.OrderImage::getImageUrl)
+                .images(order.getImages() != null ? order.getImages().stream()
+                        .map(image -> OrderDTO.ImageDTO.builder()
+                                .url(null)
+                                .path(image.getImageUrl())
+                                .build())
                         .collect(Collectors.toList())
                         : new ArrayList<>())
                 .build();
@@ -156,9 +210,9 @@ public class OrderService {
                 .orderDate(orderDTO.getOrderDate())
                 .pickupDate(orderDTO.getPickupDate())
                 .status(orderDTO.getStatus())
-                .images(orderDTO.getImagePaths() != null ? orderDTO.getImagePaths().stream()
-                    .map(imagePath -> Order.OrderImage.builder()
-                            .imageUrl(imagePath)
+                .images(orderDTO.getImages() != null ? orderDTO.getImages().stream()
+                    .map(image -> Order.OrderImage.builder()
+                            .imageUrl(image.getPath())
                             .uploadedAt(Instant.now())
                             .build())
                     .collect(Collectors.toList())
