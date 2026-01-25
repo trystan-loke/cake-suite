@@ -635,6 +635,7 @@ async function saveOrder() {
     
     // Close dialog on success
     showOrderDialog.value = false;
+    showOrderDetailsDialog.value = false;
     uploadedFiles.value = [];
     
     // Refresh orders list to ensure we have latest data
