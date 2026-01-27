@@ -71,8 +71,9 @@
     <!-- Order form dialog -->
     <v-dialog v-model="showOrderDialog" max-width="800px">
       <v-card>
-        <v-card-title class="px-8 pb-0">
+        <v-card-title class="px-8 pb-0 d-flex justify-space-between align-center">
           {{ isEditMode ? 'Edit Order' : 'New Order' }}
+          <v-btn icon="$close" variant="text" size="small" @click="showOrderDialog = false" class="ms-2"></v-btn>
         </v-card-title>
         
         <v-card-text class="px-4 pt-0">
@@ -471,8 +472,9 @@
     <!-- Filter Dialog -->
     <v-dialog v-model="showFilterDialog" max-width="500px">
       <v-card>
-        <v-card-title class="px-8 pb-0 mt-2 text-center">
+        <v-card-title class="px-8 pb-0 mt-2 position-relative d-flex justify-center align-center">
           Filter
+          <v-btn icon="$close" variant="text" size="small" @click="showFilterDialog = false" class="position-absolute" style="right: 10px;"></v-btn>
         </v-card-title>
         
         <v-card-text class="px-4 pt-2">
