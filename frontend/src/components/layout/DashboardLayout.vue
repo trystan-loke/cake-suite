@@ -4,7 +4,17 @@
       <v-app-bar color="primary">
         <v-app-bar-nav-icon variant="text" @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
         <v-toolbar-title>Cake Suite</v-toolbar-title>
-        <v-btn icon="$dotsVertical" variant="text"></v-btn>
+        <v-menu :offset="[-15, -25]" location="bottom" transition="slide-y-transition">
+          <template v-slot:activator="{ props }">
+            <v-btn icon="$dotsVertical" variant="text" v-bind="props"></v-btn>
+          </template>
+
+          <v-list>
+            <v-list-item @click="handleLogout">
+              <v-list-item-title>Logout</v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-menu>
       </v-app-bar>
 
       <v-navigation-drawer v-model="drawer" temporary>
@@ -29,6 +39,8 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { auth } from '../../firebase'
+import { signOut } from 'firebase/auth'
 
 const drawer = ref<boolean>(false)
 
@@ -45,6 +57,14 @@ const items = computed(() =>
       to: { name: r.name as string },
     }))
 )
+
+const handleLogout = async () => {
+  try {
+    await signOut(auth)
+  } catch (error) {
+    console.error('Logout error:', error)
+  }
+}
 
 // auto-close drawer on route change
 watch(() => router.currentRoute.value, () => {
