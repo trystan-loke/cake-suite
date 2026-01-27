@@ -20,9 +20,11 @@ public class OrderController {
     private final OrderService orderService;
     
     @GetMapping
-    public ResponseEntity<List<OrderDTO>> getAllOrders(@RequestParam(value = "from", required = false) Instant from) {
+    public ResponseEntity<List<OrderDTO>> getAllOrders(
+            @RequestParam(value = "from", required = false) Instant from,
+            @RequestParam(value = "to", required = false) Instant to) {
         User currentUser = getCurrentUser();
-        return ResponseEntity.ok(orderService.getAllOrders(currentUser, from));
+        return ResponseEntity.ok(orderService.getAllOrders(currentUser, from, to));
     }
     
     @GetMapping("/{id}")

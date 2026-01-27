@@ -63,7 +63,13 @@ export interface Order {
 
 // Order API Service
 export const OrderAPI = {
-  getAllOrders: (from?: string) => apiRequest<Order[]>(from ? `/orders?from=${from}` : '/orders'),
+  getAllOrders: (from?: string, to?: string) => {
+    const params = new URLSearchParams();
+    if (from) params.append('from', from);
+    if (to) params.append('to', to);
+    const queryString = params.toString();
+    return apiRequest<Order[]>(queryString ? `/orders?${queryString}` : '/orders');
+  },
   
   getOrderById: (id: string) => apiRequest<Order>(`/orders/${id}`),
   

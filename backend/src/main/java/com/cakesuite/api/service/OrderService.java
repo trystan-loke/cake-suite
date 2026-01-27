@@ -30,11 +30,21 @@ public class OrderService {
     @Value("${gcp.storage.upload-path-temp}")
     private String tempPath;
     
-    public List<OrderDTO> getAllOrders(User user, Instant from) {
-        if(from == null) {
+    public List<OrderDTO> getAllOrders(User user, Instant from, Instant to) {
+        // If neither from nor to is provided, default from to today
+        if(from == null && to == null) {
             from = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant();
         }
-        List<Order> orders = orderRepository.findFromDate(user.getId(), from, Sort.by(Sort.Direction.ASC, "pickupDate"));
+        
+        List<Order> orders;
+        if(from != null && to != null) {
+            orders = orderRepository.findByDateRange(user.getId(), from, to, Sort.by(Sort.Direction.ASC, "pickupDate"));
+        } else if(from != null) {
+            orders = orderRepository.findFromDate(user.getId(), from, Sort.by(Sort.Direction.ASC, "pickupDate"));
+        } else {
+            orders = orderRepository.findToDate(user.getId(), to, Sort.by(Sort.Direction.ASC, "pickupDate"));
+        }
+        
         List<OrderDTO> result = orders.stream()
                 .map(o -> {
                     OrderDTO dto = convertToDTO(o);
