@@ -10,6 +10,9 @@
           </template>
 
           <v-list>
+            <v-list-item @click="changePasswordOpen = true">
+              <v-list-item-title>Change Password</v-list-item-title>
+            </v-list-item>
             <v-list-item @click="handleLogout">
               <v-list-item-title>Logout</v-list-item-title>
             </v-list-item>
@@ -33,6 +36,7 @@
         <router-view />
       </v-main>
     </v-layout>
+    <ChangePasswordDialog v-model="changePasswordOpen" />
   </v-card>
 </template>
 
@@ -41,8 +45,10 @@ import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { auth } from '../../firebase'
 import { signOut } from 'firebase/auth'
+import ChangePasswordDialog from '../ChangePasswordDialog.vue'
 
 const drawer = ref<boolean>(false)
+const changePasswordOpen = ref<boolean>(false)
 
 const router = useRouter()
 
