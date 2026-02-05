@@ -74,7 +74,7 @@
     <!-- Order form dialog -->
     <v-dialog v-model="showOrderDialog" max-width="800px">
       <v-card>
-        <v-card-title class="px-8 pb-0 d-flex justify-space-between align-center">
+        <v-card-title class="px-8 pt-4 pb-0 d-flex justify-space-between align-center">
           {{ isEditMode ? 'Edit Order' : 'New Order' }}
           <v-btn icon="$close" variant="text" size="small" @click="showOrderDialog = false" class="ms-2"></v-btn>
         </v-card-title>
