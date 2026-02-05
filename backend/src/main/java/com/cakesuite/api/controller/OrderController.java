@@ -3,12 +3,15 @@ package com.cakesuite.api.controller;
 import com.cakesuite.api.dto.OrderDTO;
 import com.cakesuite.api.model.User;
 import com.cakesuite.api.service.OrderService;
+
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
 
@@ -50,6 +53,14 @@ public class OrderController {
         User currentUser = getCurrentUser();
         orderService.deleteOrder(id, currentUser);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/export")
+    public void exportOrders(@RequestParam(required = false) Instant from, 
+                                @RequestParam(required = false) Instant to,
+                                HttpServletResponse response) throws IOException {
+        User currentUser = getCurrentUser();
+        orderService.exportOrdersToCsv(currentUser, from, to, response);
     }
     
     private User getCurrentUser() {

@@ -3,7 +3,10 @@
     <v-row>
       <v-col class="d-flex justify-space-between align-center">
         <h2>Orders</h2>
-        <v-btn icon="$filter" variant="text" density="comfortable" @click="openFilterDialog"></v-btn>
+        <div>
+          <v-btn  icon="$fileDownload" variant="text" density="comfortable" class="me-2" @click="exportToCSV"></v-btn>
+          <v-btn icon="$filter" variant="text" density="comfortable" @click="openFilterDialog"></v-btn>
+        </div>
       </v-col>
     </v-row>
 
@@ -786,6 +789,16 @@ async function deleteOrder() {
     globalNotifications.error('Failed to delete order. Please try again.');
   } finally {
     deleting.value = false;
+  }
+}
+
+async function exportToCSV() {
+  try {
+    await OrderAPI.exportOrders(filterFromDate.value, filterToDate.value);
+    globalNotifications.success('Orders exported successfully');
+  } catch (err) {
+    console.error('Failed to export orders:', err);
+    globalNotifications.error('Failed to export orders. Please try again.');
   }
 }
 

@@ -6,12 +6,16 @@ import com.cakesuite.api.model.User;
 import com.cakesuite.api.repository.OrderRepository;
 import com.cakesuite.api.util.IdGenerator;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -177,6 +181,38 @@ public class OrderService {
         
         orderRepository.delete(order);
     }
+
+    public void exportOrdersToCsv(User user, Instant from, Instant to, HttpServletResponse response) throws IOException {
+    
+    List<OrderDTO> orders = getAllOrders(user, from, to);
+
+    // Set response headers for CSV download
+    response.setContentType("text/csv");
+    response.setHeader("Content-Disposition", "attachment; filename=\"orders_" + 
+        LocalDate.now().toString() + ".csv\"");
+
+    // Create CSV writer
+    try (CSVPrinter csvPrinter = new CSVPrinter(response.getWriter(), CSVFormat.DEFAULT
+            .withHeader("Pickup Date", "Customer Name", "Order Summary", "Order Details", 
+                       "Total Amount", "Deposit", "Delivery", "Status"))) {
+        
+        for (OrderDTO order : orders) {
+            csvPrinter.printRecord(
+                order.getPickupDate() != null ? 
+                    LocalDate.ofInstant(order.getPickupDate(), ZoneId.systemDefault()).toString() : "",
+                order.getCustomerName(),
+                order.getOrderSummary(),
+                order.getOrderDetails() != null ? order.getOrderDetails() : "",
+                order.getTotalAmount(),
+                order.getDeposit() != null ? order.getDeposit() : 0,
+                order.isDelivery() ? "Yes" : "No",
+                order.getStatus()
+            );
+        }
+        
+        csvPrinter.flush();
+    }
+}
     
     private OrderDTO convertToDTO(Order order) {
         return OrderDTO.builder()
