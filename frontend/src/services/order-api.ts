@@ -63,7 +63,13 @@ export interface Order {
 
 // Order API Service
 export const OrderAPI = {
-  getAllOrders: (from?: string) => apiRequest<Order[]>(from ? `/orders?from=${from}` : '/orders'),
+  getAllOrders: (from?: string, to?: string) => {
+    const params = new URLSearchParams();
+    if (from) params.append('from', from);
+    if (to) params.append('to', to);
+    const queryString = params.toString();
+    return apiRequest<Order[]>(queryString ? `/orders?${queryString}` : '/orders');
+  },
   
   getOrderById: (id: string) => apiRequest<Order>(`/orders/${id}`),
   
@@ -72,4 +78,32 @@ export const OrderAPI = {
   updateOrder: (id: string, order: Order) => apiRequest<Order>(`/orders/${id}`, 'PUT', order),
   
   deleteOrder: (id: string) => apiRequest<void>(`/orders/${id}`, 'DELETE'),
+
+  exportOrders: async (from?: string, to?: string): Promise<void> => {
+    const params = new URLSearchParams();
+    if (from) params.append('from', new Date(from).toISOString());
+    if (to) params.append('to', new Date(to).toISOString());
+    
+    const token = await auth.currentUser?.getIdToken();
+    const response = await fetch(
+      `${API_BASE_URL}/orders/export?${params.toString()}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    
+    if (!response.ok) throw new Error('Export failed');
+    
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `orders_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  }
 };

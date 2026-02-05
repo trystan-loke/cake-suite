@@ -1,8 +1,12 @@
 <template>
   <v-container>
     <v-row>
-      <v-col>
+      <v-col class="d-flex justify-space-between align-center">
         <h2>Orders</h2>
+        <div>
+          <v-btn  icon="$fileDownload" variant="text" density="comfortable" class="me-2" @click="exportToCSV"></v-btn>
+          <v-btn icon="$filter" variant="text" density="comfortable" @click="openFilterDialog"></v-btn>
+        </div>
       </v-col>
     </v-row>
 
@@ -70,8 +74,9 @@
     <!-- Order form dialog -->
     <v-dialog v-model="showOrderDialog" max-width="800px">
       <v-card>
-        <v-card-title class="px-8 pb-0">
+        <v-card-title class="px-8 pt-4 pb-0 d-flex justify-space-between align-center">
           {{ isEditMode ? 'Edit Order' : 'New Order' }}
+          <v-btn icon="$close" variant="text" size="small" @click="showOrderDialog = false" class="ms-2"></v-btn>
         </v-card-title>
         
         <v-card-text class="px-4 pt-0">
@@ -466,6 +471,71 @@
       @click="openOrderDialog()"
       elevation="4"
     ></v-btn>
+
+    <!-- Filter Dialog -->
+    <v-dialog v-model="showFilterDialog" max-width="500px">
+      <v-card>
+        <v-card-title class="px-8 pb-0 mt-2 position-relative d-flex justify-center align-center">
+          Filter
+          <v-btn icon="$close" variant="text" size="small" @click="showFilterDialog = false" class="position-absolute" style="right: 10px;"></v-btn>
+        </v-card-title>
+        
+        <v-card-text class="px-4 pt-2">
+          <v-container>
+            <v-row dense>
+              <v-col cols="12">
+                <h3 class="text-subtitle-1 mb-2">Date Range</h3>
+              </v-col>
+              <v-col cols="6">
+                <v-menu
+                  v-model="showFromDatePicker"
+                  :close-on-content-click="false"
+                >
+                  <template v-slot:activator="{ props }">
+                    <v-text-field
+                      v-model="formattedFromDate"
+                      label="From Date"
+                      readonly
+                      v-bind="props"
+                    ></v-text-field>
+                  </template>
+                  <v-date-picker
+                    v-model="filterFromDate"
+                    @update:model-value="showFromDatePicker = false"
+                  ></v-date-picker>
+                </v-menu>
+              </v-col>
+              <v-col cols="6">
+                <v-menu
+                  v-model="showToDatePicker"
+                  :close-on-content-click="false"
+                >
+                  <template v-slot:activator="{ props }">
+                    <v-text-field
+                      v-model="formattedToDate"
+                      label="To Date"
+                      readonly
+                      v-bind="props"
+                    ></v-text-field>
+                  </template>
+                  <v-date-picker
+                    v-model="filterToDate"
+                    @update:model-value="showToDatePicker = false"
+                  ></v-date-picker>
+                </v-menu>
+              </v-col>
+            </v-row>
+          </v-container>
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="grey-darken-1" variant="text" @click="resetFilter">Reset</v-btn>
+          <v-btn color="grey-darken-1" variant="text" @click="showFilterDialog = false">Cancel</v-btn>
+          <v-btn color="primary" variant="text" @click="applyFilter">Apply</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
@@ -493,7 +563,16 @@ const showDeleteDialog = ref(false);
 const showOrderDatePicker = ref(false);
 const showPickupDatePicker = ref(false);
 const showOrderDetailsDialog = ref(false);
+const showFilterDialog = ref(false);
+const showFromDatePicker = ref(false);
+const showToDatePicker = ref(false);
 const selectedOrder = ref<Order | null>(null);
+
+// Date range filter state - default from today to 90 days from now
+const today = new Date();
+const futureDate = new Date(today.getTime() + 90 * 24 * 60 * 60 * 1000); // 3 months from now
+const filterFromDate = ref<string>(today.toISOString());
+const filterToDate = ref<string>(futureDate.toISOString());
 
 // Current order being edited or created
 const currentOrder = ref<Order>({
@@ -537,10 +616,39 @@ const formattedPickupDate = computed(() => {
   return formatDate(currentOrder.value.pickupDate, true);
 });
 
+const formattedFromDate = computed(() => {
+  return formatDate(filterFromDate.value, true);
+});
+
+const formattedToDate = computed(() => {
+  return formatDate(filterToDate.value, true);
+});
+
 // Function to open order details
 function openOrderDetails(order: Order) {
   selectedOrder.value = order;
   showOrderDetailsDialog.value = true;
+}
+
+function openFilterDialog() {
+  showFilterDialog.value = true;
+}
+
+async function applyFilter() {
+  if (new Date(filterFromDate.value) > new Date(filterToDate.value)) {
+    globalNotifications.error('From date must be before to date');
+    return;
+  }
+  
+  showFilterDialog.value = false;
+  await loadOrders(filterFromDate.value, filterToDate.value);
+}
+
+function resetFilter() {
+  const today = new Date();
+  const futureDate = new Date(today.getTime() + 90 * 24 * 60 * 60 * 1000); // 3 months from now
+  filterFromDate.value = today.toISOString();
+  filterToDate.value = futureDate.toISOString();
 }
 
 // Load orders when component is mounted
@@ -548,13 +656,14 @@ onMounted(async () => {
   await loadOrders();
 });
 
-// Load all orders from the API
-async function loadOrders() {
+async function loadOrders(fromDate?: string, toDate?: string) {
   loading.value = true;
   error.value = '';
   
   try {
-    orders.value = await OrderAPI.getAllOrders(new Date(new Date().setHours(0, 0, 0, 0)).toISOString());
+    const from = fromDate ? new Date(fromDate).toISOString() : undefined;
+    const to = toDate ? new Date(toDate).toISOString() : undefined;
+    orders.value = await OrderAPI.getAllOrders(from, to);
   } catch (err) {
     console.error('Failed to load orders:', err);
     error.value = 'Failed to load orders. Please try again.';
@@ -680,6 +789,16 @@ async function deleteOrder() {
     globalNotifications.error('Failed to delete order. Please try again.');
   } finally {
     deleting.value = false;
+  }
+}
+
+async function exportToCSV() {
+  try {
+    await OrderAPI.exportOrders(filterFromDate.value, filterToDate.value);
+    globalNotifications.success('Orders exported successfully');
+  } catch (err) {
+    console.error('Failed to export orders:', err);
+    globalNotifications.error('Failed to export orders. Please try again.');
   }
 }
 

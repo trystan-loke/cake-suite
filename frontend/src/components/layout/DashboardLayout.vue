@@ -4,7 +4,20 @@
       <v-app-bar color="primary">
         <v-app-bar-nav-icon variant="text" @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
         <v-toolbar-title>Cake Suite</v-toolbar-title>
-        <v-btn icon="$dotsVertical" variant="text"></v-btn>
+        <v-menu :offset="[-15, -25]" location="bottom" transition="slide-y-transition">
+          <template v-slot:activator="{ props }">
+            <v-btn icon="$dotsVertical" variant="text" v-bind="props"></v-btn>
+          </template>
+
+          <v-list>
+            <v-list-item @click="changePasswordOpen = true">
+              <v-list-item-title>Change Password</v-list-item-title>
+            </v-list-item>
+            <v-list-item @click="handleLogout">
+              <v-list-item-title>Logout</v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-menu>
       </v-app-bar>
 
       <v-navigation-drawer v-model="drawer" temporary>
@@ -23,14 +36,19 @@
         <router-view />
       </v-main>
     </v-layout>
+    <ChangePasswordDialog v-model="changePasswordOpen" />
   </v-card>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { auth } from '../../firebase'
+import { signOut } from 'firebase/auth'
+import ChangePasswordDialog from '../ChangePasswordDialog.vue'
 
 const drawer = ref<boolean>(false)
+const changePasswordOpen = ref<boolean>(false)
 
 const router = useRouter()
 
@@ -45,6 +63,14 @@ const items = computed(() =>
       to: { name: r.name as string },
     }))
 )
+
+const handleLogout = async () => {
+  try {
+    await signOut(auth)
+  } catch (error) {
+    console.error('Logout error:', error)
+  }
+}
 
 // auto-close drawer on route change
 watch(() => router.currentRoute.value, () => {

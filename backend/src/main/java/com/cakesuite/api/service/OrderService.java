@@ -6,12 +6,16 @@ import com.cakesuite.api.model.User;
 import com.cakesuite.api.repository.OrderRepository;
 import com.cakesuite.api.util.IdGenerator;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -30,11 +34,21 @@ public class OrderService {
     @Value("${gcp.storage.upload-path-temp}")
     private String tempPath;
     
-    public List<OrderDTO> getAllOrders(User user, Instant from) {
-        if(from == null) {
+    public List<OrderDTO> getAllOrders(User user, Instant from, Instant to) {
+        // If neither from nor to is provided, default from to today
+        if(from == null && to == null) {
             from = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant();
         }
-        List<Order> orders = orderRepository.findFromDate(user.getId(), from, Sort.by(Sort.Direction.ASC, "pickupDate"));
+        
+        List<Order> orders;
+        if(from != null && to != null) {
+            orders = orderRepository.findByDateRange(user.getId(), from, to, Sort.by(Sort.Direction.ASC, "pickupDate"));
+        } else if(from != null) {
+            orders = orderRepository.findFromDate(user.getId(), from, Sort.by(Sort.Direction.ASC, "pickupDate"));
+        } else {
+            orders = orderRepository.findToDate(user.getId(), to, Sort.by(Sort.Direction.ASC, "pickupDate"));
+        }
+        
         List<OrderDTO> result = orders.stream()
                 .map(o -> {
                     OrderDTO dto = convertToDTO(o);
@@ -167,6 +181,40 @@ public class OrderService {
         
         orderRepository.delete(order);
     }
+
+    public void exportOrdersToCsv(User user, Instant from, Instant to, HttpServletResponse response) throws IOException {
+    
+    List<OrderDTO> orders = getAllOrders(user, from, to);
+
+    // Set response headers for CSV download
+    response.setContentType("text/csv; charset=UTF-8");
+    response.setHeader("Content-Disposition", "attachment; filename=\"orders_" + 
+        LocalDate.now().toString() + ".csv\"");
+        // Write UTF-8 BOM for Excel compatibility
+    response.getWriter().write('\ufeff');
+
+    // Create CSV writer
+    try (CSVPrinter csvPrinter = new CSVPrinter(response.getWriter(), CSVFormat.DEFAULT
+            .withHeader("Pickup Date", "Customer Name", "Order Summary", "Order Details", 
+                       "Total Amount", "Deposit", "Delivery", "Status"))) {
+        
+        for (OrderDTO order : orders) {
+            csvPrinter.printRecord(
+                order.getPickupDate() != null ? 
+                    LocalDate.ofInstant(order.getPickupDate(), ZoneId.systemDefault()).toString() : "",
+                order.getCustomerName(),
+                order.getOrderSummary(),
+                order.getOrderDetails() != null ? order.getOrderDetails() : "",
+                order.getTotalAmount(),
+                order.getDeposit() != null ? order.getDeposit() : 0,
+                order.isDelivery() ? "Yes" : "No",
+                order.getStatus()
+            );
+        }
+        
+        csvPrinter.flush();
+    }
+}
     
     private OrderDTO convertToDTO(Order order) {
         return OrderDTO.builder()

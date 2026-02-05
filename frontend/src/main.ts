@@ -16,6 +16,8 @@ import {
   mdiTruck,
   mdiStore,
   mdiUpload,
+  mdiFilter,
+  mdiFileDownload
 } from '@mdi/js'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
@@ -44,6 +46,8 @@ const vuetify = createVuetify({
       truck: mdiTruck,
       store: mdiStore,
       upload: mdiUpload,
+      filter: mdiFilter,
+      fileDownload: mdiFileDownload
     },
     sets: {
       mdi,
