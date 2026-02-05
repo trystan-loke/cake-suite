@@ -187,9 +187,11 @@ public class OrderService {
     List<OrderDTO> orders = getAllOrders(user, from, to);
 
     // Set response headers for CSV download
-    response.setContentType("text/csv");
+    response.setContentType("text/csv; charset=UTF-8");
     response.setHeader("Content-Disposition", "attachment; filename=\"orders_" + 
         LocalDate.now().toString() + ".csv\"");
+        // Write UTF-8 BOM for Excel compatibility
+    response.getWriter().write('\ufeff');
 
     // Create CSV writer
     try (CSVPrinter csvPrinter = new CSVPrinter(response.getWriter(), CSVFormat.DEFAULT
