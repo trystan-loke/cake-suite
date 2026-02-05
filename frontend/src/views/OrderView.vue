@@ -780,6 +780,7 @@ async function deleteOrder() {
     
     // Close dialog on success
     showDeleteDialog.value = false;
+    showOrderDetailsDialog.value = false;
     orderToDelete.value = null;
     
     // Show success notification
