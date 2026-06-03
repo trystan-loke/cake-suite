@@ -174,7 +174,7 @@
                     prefix="$"
                     required
                     :rules="[
-                      v => !!v || 'Amount is required',
+                      v => v !== null && v !== undefined && v !== '' || 'Amount is required',
                       v => Number(v) > 0 || 'Amount must be greater than 0',
                       v => Number(v) <= 10000 || 'Amount cannot be greater than 10000'
                     ]"
@@ -780,6 +780,7 @@ async function deleteOrder() {
     
     // Close dialog on success
     showDeleteDialog.value = false;
+    showOrderDetailsDialog.value = false;
     orderToDelete.value = null;
     
     // Show success notification
